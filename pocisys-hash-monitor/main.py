@@ -246,7 +246,7 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.3.7"}
+        return {"ok": True, "version": "1.3.9"}
     if method == "GET" and path == "/api/status":
         try:
             pool_statuses = pool_logs.status()
@@ -479,7 +479,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.3.7"
+    server_version = "PoCiSys/1.3.9"
     protocol_version = "HTTP/1.1"
 
     def log_message(self, _format, *_args):
@@ -523,15 +523,34 @@ class PoCiSysHandler(BaseHTTPRequestHandler):
                 return
         else:
             candidate = WEB_ROOT / "index.html"
-        body = candidate.read_bytes()
         content_type = mimetypes.guess_type(candidate.name)[0] or "application/octet-stream"
+        if candidate.name == "index.html":
+            html = candidate.read_text(encoding="utf-8")
+            try:
+                css = (WEB_ROOT / "style.css").read_text(encoding="utf-8")
+                js = (WEB_ROOT / "dashboard.js").read_text(encoding="utf-8")
+                html = html.replace(
+                    '<link rel="stylesheet" href="/static/style.css">',
+                    f"<style>\n{css}\n</style>",
+                )
+                html = html.replace(
+                    '<script src="/static/dashboard.js"></script>',
+                    f"<script>\n{js}\n</script>",
+                )
+            except OSError as exc:
+                print(f"PoCiSys warning: inline asset injection failed: {exc}", flush=True)
+            body = html.encode("utf-8")
+        else:
+            body = candidate.read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", f"{content_type}; charset=utf-8" if content_type.startswith("text/") else content_type)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-cache")
+        self.send_header("Connection", "close")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
         self.wfile.write(body)
+        self.close_connection = True
 
     def dispatch(self, method):
         path = urllib.parse.urlparse(self.path).path.rstrip("/") or "/"
@@ -582,7 +601,7 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.3.7 starting", flush=True)
+    print("PoCiSys Hash Monitor 1.3.9 starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()

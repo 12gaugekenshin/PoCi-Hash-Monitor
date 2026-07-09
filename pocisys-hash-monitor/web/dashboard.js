@@ -9,6 +9,8 @@ let managedMiners = [];
 let managedPools = [];
 let settings = null;
 let activeGroup = "All";
+let pointerStart = null;
+let suppressNextClick = false;
 
 function number(value, decimals = 1) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return "—";
@@ -516,6 +518,10 @@ async function testDiscord(button) {
 }
 
 document.addEventListener("click", async event => {
+  if (suppressNextClick || window.getSelection()?.toString()) {
+    suppressNextClick = false;
+    return;
+  }
   const link = event.target.closest("[data-link]");
   if (link) {
     event.preventDefault();
@@ -688,9 +694,24 @@ $("#settings-form").addEventListener("submit", async event => {
 
 $("#pool-form").elements.mode.addEventListener("change", syncPoolFields);
 
-$$("dialog").forEach(dialog => dialog.addEventListener("click", event => {
-  if (event.target === dialog) dialog.close();
-}));
+document.addEventListener("pointerdown", event => {
+  pointerStart = {x: event.clientX, y: event.clientY};
+  suppressNextClick = false;
+}, true);
+
+document.addEventListener("pointermove", event => {
+  if (!pointerStart) return;
+  if (Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 6) {
+    suppressNextClick = true;
+  }
+}, true);
+
+document.addEventListener("pointerup", () => {
+  pointerStart = null;
+  setTimeout(() => {
+    suppressNextClick = false;
+  }, 0);
+}, true);
 
 window.addEventListener("popstate", route);
 route();

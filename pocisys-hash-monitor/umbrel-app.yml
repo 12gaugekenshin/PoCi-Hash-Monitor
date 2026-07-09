@@ -2,7 +2,7 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.3.7"
+version: "1.3.9"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: icon.svg
 description: >-
@@ -31,9 +31,9 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Keeps the v1.3.6 backend supervisor and pool-save hardening, and scrubs UI
-  placeholders so no private miner, pool, node, or Discord values ship as
-  examples.
+  Includes the inline-asset and backend watchdog fixes, and improves dialog
+  behavior so dragging to highlight text no longer closes popups or triggers
+  accidental navigation.
 dependencies: []
 path: ""
 defaultUsername: ""

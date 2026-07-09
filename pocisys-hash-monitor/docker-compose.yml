@@ -57,6 +57,8 @@ services:
         main_py = matches[0]
         os.chdir(main_py.parent)
         os.environ["PYTHONPATH"] = str(main_py.parent)
+        port = int(os.environ.get("POCISYS_PORT", "8765"))
+        health_url = f"http://127.0.0.1:{port}/health"
         state = {"stop": False, "child": None}
 
         def stop_child(signum, frame):
@@ -73,11 +75,48 @@ services:
             print("PoCiSys supervisor: starting app process", flush=True)
             child = subprocess.Popen([sys.executable, "-u", str(main_py)], cwd=str(main_py.parent), env=os.environ.copy())
             state["child"] = child
-            code = child.wait()
+            saw_healthy = False
+            failures = 0
+            started_at = time.monotonic()
+            code = None
+            while not state["stop"]:
+                code = child.poll()
+                if code is not None:
+                    break
+                try:
+                    with urllib.request.urlopen(health_url, timeout=1.0) as response:
+                        response.read(128)
+                    if not saw_healthy:
+                        print("PoCiSys supervisor: app health check passed", flush=True)
+                    saw_healthy = True
+                    failures = 0
+                except Exception as exc:
+                    failures += 1
+                    if saw_healthy and failures >= 3:
+                        print(f"PoCiSys supervisor: health check failed repeatedly ({exc}); restarting app", flush=True)
+                        child.terminate()
+                        try:
+                            code = child.wait(timeout=5)
+                        except subprocess.TimeoutExpired:
+                            child.kill()
+                            code = child.wait()
+                        break
+                    if not saw_healthy and time.monotonic() - started_at > 45:
+                        print(f"PoCiSys supervisor: app did not become healthy ({exc}); restarting app", flush=True)
+                        child.terminate()
+                        try:
+                            code = child.wait(timeout=5)
+                        except subprocess.TimeoutExpired:
+                            child.kill()
+                            code = child.wait()
+                        break
+                time.sleep(2)
             if state["stop"]:
                 raise SystemExit(0)
-            print(f"PoCiSys supervisor: app process exited with code {code}; restarting in 2 seconds", flush=True)
-            time.sleep(2)
+            if code is None:
+                code = child.wait()
+            print(f"PoCiSys supervisor: app process exited with code {code}; restarting shortly", flush=True)
+            time.sleep(0.25)
     networks:
       default:
         aliases:
