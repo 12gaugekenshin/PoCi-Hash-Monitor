@@ -1,0 +1,92 @@
+from __future__ import annotations
+
+import json
+import os
+import uuid
+from copy import deepcopy
+from pathlib import Path
+
+
+def make_id(prefix: str):
+    return f"{prefix}_{uuid.uuid4().hex[:12]}"
+
+
+def normalize_config(value: dict):
+    config = deepcopy(value)
+    config.setdefault("app", {})
+    config.setdefault("miners", [])
+    config.setdefault("pools", [])
+    config.setdefault("discord", {})
+    config.setdefault("odds", {})
+    config["app"].setdefault("dashboard_density", "comfortable")
+    config["app"].setdefault("dashboard_base_url", "")
+    config["app"].setdefault("lan_access_enabled", False)
+    config["odds"].setdefault("auto_network_data", True)
+    discord_defaults = {
+        "send_offline_alerts": True,
+        "send_recovery_alerts": True,
+        "send_hashrate_alerts": True,
+        "send_temperature_alerts": True,
+        "send_best_diff_alerts": True,
+        "send_block_found_alerts": True,
+        "send_pool_alerts": True,
+        "send_pool_switch_alerts": True,
+        "send_share_alerts": True,
+        "verbose_pool_events": False,
+    }
+    for key, default in discord_defaults.items():
+        config["discord"].setdefault(key, default)
+    for miner in config["miners"]:
+        miner.setdefault("id", make_id("miner"))
+        if "min_hashrate_ths" not in miner:
+            expected = miner.get("expected_hashrate_ths")
+            percent = miner.get("hashrate_warning_percent", 75)
+            miner["min_hashrate_ths"] = (
+                round(float(expected) * float(percent) / 100, 6)
+                if expected not in (None, "")
+                else None
+            )
+        miner.pop("expected_hashrate_ths", None)
+        miner.pop("hashrate_warning_percent", None)
+        miner.pop("fan_min_rpm", None)
+    for pool in config["pools"]:
+        pool.setdefault("id", make_id("pool"))
+        pool.setdefault("mode", "local_log")
+        pool.setdefault("log_path", "")
+        pool.setdefault("api_url", "")
+        pool.setdefault("bitcoin_address", "")
+    return config
+
+
+def load_config(path: Path):
+    with path.open("r", encoding="utf-8") as handle:
+        return normalize_config(json.load(handle))
+
+
+def save_config(path: Path, config: dict):
+    """Atomically replace config.json so an interrupted write cannot corrupt it."""
+    temporary = path.with_suffix(".json.tmp")
+    with temporary.open("w", encoding="utf-8", newline="\n") as handle:
+        json.dump(config, handle, indent=2, ensure_ascii=False)
+        handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(temporary, path)
+
+
+def apply_in_place(target: dict, updated: dict):
+    """Preserve service references while applying a newly validated config."""
+    for section in ("app", "discord", "odds"):
+        current = target.setdefault(section, {})
+        current.clear()
+        current.update(deepcopy(updated.get(section, {})))
+    for section in ("miners", "pools"):
+        current = target.setdefault(section, [])
+        current[:] = deepcopy(updated.get(section, []))
+
+
+def public_config(config: dict):
+    safe = deepcopy(config)
+    if safe.get("discord", {}).get("webhook_url"):
+        safe["discord"]["webhook_url"] = "configured (hidden)"
+    return safe

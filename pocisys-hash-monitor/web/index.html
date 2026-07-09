@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080c12">
+  <title>PoCiSys Hash Monitor</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" data-link>
+      <span class="brand-mark">P</span>
+      <span><strong>PoCiSys</strong><small>Hash Monitor</small></span>
+    </a>
+    <nav>
+      <a href="/" data-link>Dashboard</a>
+      <a href="/miners" data-link>Miners</a>
+      <a href="/pools" data-link>Pools</a>
+      <a href="/odds" data-link>Block Odds</a>
+      <a href="/alerts" data-link>Alerts</a>
+      <a href="/settings" data-link>Settings</a>
+    </nav>
+    <div class="top-actions">
+      <button class="primary small" data-action="add-miner">+ Add miner</button>
+      <div class="connection"><i></i><span id="connection-text">Connecting · Read-only</span></div>
+    </div>
+  </header>
+
+  <main>
+    <section id="page-dashboard" class="page">
+      <div class="page-heading">
+        <div><p class="eyebrow">Fleet overview</p><h1>Your mining operation</h1><p>Every enabled miner, live and local.</p></div>
+        <div class="heading-actions"><span id="last-poll">Waiting for first poll…</span><button data-action="poll-now">Poll now</button></div>
+      </div>
+      <div id="summary-grid" class="summary-grid"></div>
+      <div class="section-heading fleet-heading">
+        <div><h2>Miner fleet</h2><p>Choose a miner for its full live detail view.</p></div>
+        <div id="group-filters" class="filter-chips"></div>
+      </div>
+      <div id="dashboard-miners"></div>
+      <div class="split">
+        <section class="panel"><div class="panel-title"><h2>Block odds</h2><a href="/odds" data-link>Details →</a></div><div id="dashboard-odds"></div></section>
+        <section class="panel"><div class="panel-title"><h2>Pool monitor</h2><a href="/pools" data-link>Event feed →</a></div><div id="dashboard-pools"></div></section>
+      </div>
+    </section>
+
+    <section id="page-miners" class="page">
+      <div class="page-heading">
+        <div><p class="eyebrow">Fleet management · Unlimited devices</p><h1>Miners</h1><p>Add devices, organize groups, set thresholds, and control display order.</p></div>
+        <button class="primary" data-action="add-miner">+ Add miner</button>
+      </div>
+      <div id="miners-table" class="table-wrap"></div>
+    </section>
+
+    <section id="page-miner-detail" class="page">
+      <div id="miner-detail"></div>
+    </section>
+
+    <section id="page-pools" class="page">
+      <div class="page-heading">
+        <div><p class="eyebrow">Live · bounded memory</p><h1>Pool monitor</h1><p>Connect Public Pool directly or tail a local log. Only current data and the latest 50 events stay in memory.</p></div>
+        <button class="primary" data-action="add-pool">+ Connect pool</button>
+      </div>
+      <div id="pool-management" class="management-grid"></div>
+      <section class="panel feed-panel"><div class="panel-title"><h2>Live event feed</h2><span id="pool-event-total" class="pill">0 events</span></div><div id="pool-events" class="feed"></div></section>
+    </section>
+
+    <section id="page-odds" class="page">
+      <div class="page-heading"><div><p class="eyebrow">Solo mining calculator</p><h1>Block odds</h1><p>Live fleet hashrate against automatically refreshed BTC and BCH network data.</p></div><a class="button-link" href="/settings#odds-settings" data-link>Data settings</a></div>
+      <div id="odds-content" class="odds-grid"></div>
+    </section>
+
+    <section id="page-alerts" class="page">
+      <div class="page-heading">
+        <div><p class="eyebrow">Health checks</p><h1>Alerts</h1><p>Recent in-memory activity and Discord delivery status.</p></div>
+        <button data-action="test-discord">Send Discord test</button>
+      </div>
+      <div id="discord-status"></div>
+      <section class="panel feed-panel"><div class="panel-title"><h2>Recent alert activity</h2><span class="pill">25 max</span></div><div id="alert-events" class="feed"></div></section>
+    </section>
+
+    <section id="page-settings" class="page">
+      <div class="page-heading"><div><p class="eyebrow">App configuration</p><h1>Settings</h1><p>Changes are written safely to config.json. Miner firmware remains read-only.</p></div></div>
+      <form id="settings-form" class="settings-layout">
+        <section class="settings-card">
+          <div class="settings-card-head"><span class="settings-icon">⌁</span><div><h2>Monitoring</h2><p>Polling, timeouts, and dashboard layout.</p></div></div>
+          <div class="form-grid">
+            <label><span>Poll interval</span><div class="input-unit"><input name="poll_interval_seconds" type="number" min="2" max="3600" required><em>seconds</em></div></label>
+            <label><span>API timeout</span><div class="input-unit"><input name="request_timeout_seconds" type="number" min="0.5" max="30" step="0.5" required><em>seconds</em></div></label>
+            <label><span>Alert cooldown</span><div class="input-unit"><input name="alert_cooldown_seconds" type="number" min="0" max="86400" required><em>seconds</em></div></label>
+            <label><span>Dashboard port</span><input name="dashboard_port" type="number" min="1024" max="65535" required><small>Changing the port requires a restart.</small></label>
+            <label><span>Miner card layout</span><select name="dashboard_density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
+            <label class="switch-row full"><span><strong>LAN dashboard access</strong><small>Listen on your network so dashboard links can open from another device. Requires restart and firewall access.</small></span><input name="lan_access_enabled" type="checkbox" role="switch"></label>
+          </div>
+        </section>
+
+        <section class="settings-card discord-settings-card">
+          <div class="settings-card-head"><span class="settings-icon discord-color">D</span><div><h2>Discord alerts</h2><p>Discord can serve as your external event archive.</p></div></div>
+          <label class="switch-row"><span><strong>Enable Discord</strong><small>Send health and pool alerts to the configured webhook.</small></span><input name="discord_enabled" type="checkbox" role="switch"></label>
+          <label><span>Webhook URL</span><input name="webhook_url" type="password" autocomplete="off" placeholder="Paste a new webhook or leave unchanged"><small id="webhook-state">No webhook configured.</small></label>
+          <label><span>Dashboard link URL</span><input name="dashboard_base_url" type="url" placeholder="http://192.168.1.50:8765"><small>Discord alert titles link here. Use this PC's LAN address for phone access.</small></label>
+          <label class="check-row"><input name="clear_webhook" type="checkbox"><span>Remove the saved webhook</span></label>
+          <p class="settings-explainer">These switches are dashboard-wide and apply to every enabled miner. Hashrate and temperature limits remain per miner.</p>
+          <div class="toggle-list alert-toggle-grid">
+            <label class="switch-row"><span><strong>Miner offline</strong><small>API or miner becomes unavailable.</small></span><input name="send_offline_alerts" type="checkbox" role="switch"></label>
+            <label class="switch-row"><span><strong>Recovery alerts</strong><small>Notify when a miner returns online.</small></span><input name="send_recovery_alerts" type="checkbox" role="switch"></label>
+            <label class="switch-row"><span><strong>Low hashrate</strong><small>Below its minimum or automatic threshold.</small></span><input name="send_hashrate_alerts" type="checkbox" role="switch"></label>
+            <label class="switch-row"><span><strong>Temperature</strong><small>Per-miner warning and critical limits.</small></span><input name="send_temperature_alerts" type="checkbox" role="switch"></label>
+            <label class="switch-row"><span><strong>Best-difficulty alerts</strong><small>Notify when a live API reports a new best.</small></span><input name="send_best_diff_alerts" type="checkbox" role="switch"></label>
+            <label class="switch-row"><span><strong>Block found</strong><small>Any miner's block counter increases.</small></span><input name="send_block_found_alerts" type="checkbox" role="switch"></label>
+            <label class="switch-row"><span><strong>Pool errors</strong><small>Disconnects, RPC errors, and critical log events.</small></span><input name="send_pool_alerts" type="checkbox" role="switch"></label>
+            <label class="switch-row"><span><strong>Pool switches</strong><small>A miner changes active pool or fallback source.</small></span><input name="send_pool_switch_alerts" type="checkbox" role="switch"></label>
+            <label class="switch-row"><span><strong>Bad-share increases</strong><small>New rejected, invalid, or stale shares.</small></span><input name="send_share_alerts" type="checkbox" role="switch"></label>
+            <label class="switch-row"><span><strong>Verbose pool activity</strong><small>Rate-limited activity messages; off avoids accepted-share spam.</small></span><input name="verbose_pool_events" type="checkbox" role="switch"></label>
+          </div>
+          <button type="button" data-action="test-discord">Send test message</button>
+        </section>
+
+        <section id="odds-settings" class="settings-card">
+          <div class="settings-card-head"><span class="settings-icon">₿</span><div><h2>Block odds</h2><p>Live price, difficulty, and network hashrate with manual fallbacks.</p></div></div>
+          <div class="toggle-list">
+            <label class="switch-row"><span><strong>Automatic network data</strong><small>Refresh BTC and BCH about every 10 minutes. Only the current snapshot is kept.</small></span><input name="auto_network_data" type="checkbox" role="switch"></label>
+            <label class="switch-row"><span><strong>Bitcoin odds</strong></span><input name="btc_enabled" type="checkbox" role="switch"></label>
+            <label><span>BTC fallback hashrate <small>Optional</small></span><div class="input-unit"><input name="manual_btc_network_hashrate_eh" type="number" min="0.001" step="0.001"><em>EH/s</em></div></label>
+            <label class="switch-row"><span><strong>Bitcoin Cash odds</strong></span><input name="bch_enabled" type="checkbox" role="switch"></label>
+            <label><span>BCH fallback hashrate <small>Optional</small></span><div class="input-unit"><input name="manual_bch_network_hashrate_eh" type="number" min="0.001" step="0.001"><em>EH/s</em></div></label>
+          </div>
+        </section>
+
+        <div class="settings-save"><span id="settings-note">Read-only miner access. Only PoCiSys configuration is written to disk.</span><button class="primary" type="submit">Save settings</button></div>
+      </form>
+    </section>
+  </main>
+
+  <dialog id="miner-dialog" class="app-dialog">
+    <form id="miner-form" method="dialog">
+      <input name="id" type="hidden">
+      <div class="dialog-head"><div><p class="eyebrow">Fleet setup</p><h2 id="miner-dialog-title">Add miner</h2></div><button class="icon-button" type="button" data-action="close-dialog" aria-label="Close">×</button></div>
+      <div class="dialog-body">
+        <div class="form-grid two">
+          <label><span>Display name</span><input name="name" maxlength="80" placeholder="Bitaxe Gamma" required></label>
+          <label><span>IP address or hostname</span><input name="ip" maxlength="255" placeholder="192.168.1.110" required></label>
+          <label><span>Miner OS / API</span><select name="type" required><option value="axeos">AxeOS / Bitaxe</option><option value="nerdqaxe">NerdOS / NerdQaxe</option><option value="luxos">LuxOS</option></select></label>
+          <label><span>Group</span><input name="group" maxlength="80" value="BTC Solo" placeholder="BTC Solo"></label>
+        </div>
+        <div class="form-section"><h3>Health thresholds</h3><p class="form-help">Expected hashrate is read from the miner when its API provides it. Leave minimum hashrate blank to alert automatically below 75% of that device-reported value.</p><div class="form-grid three">
+          <label><span>Minimum hashrate <small>Optional</small></span><div class="input-unit"><input name="min_hashrate_ths" type="number" min="0" step="0.001"><em>TH/s</em></div></label>
+          <label><span>Temperature warning</span><div class="input-unit"><input name="temp_warning_c" type="number" min="0" max="150" value="70"><em>°C</em></div></label>
+          <label><span>Temperature critical</span><div class="input-unit"><input name="temp_critical_c" type="number" min="0" max="150" value="80"><em>°C</em></div></label>
+          <label><span>Display order</span><input name="display_order" type="number" min="0" max="9999" value="0"></label>
+        </div></div>
+        <label class="switch-row enabled-row"><span><strong>Enable monitoring</strong><small>Disabled miners stay configured but are not polled.</small></span><input name="enabled" type="checkbox" role="switch" checked></label>
+        <div id="miner-test-result" class="test-result"></div>
+      </div>
+      <div class="dialog-actions"><button type="button" data-action="test-miner">Test connection</button><span></span><button type="button" data-action="close-dialog">Cancel</button><button class="primary" type="submit">Save miner</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="pool-dialog" class="app-dialog">
+    <form id="pool-form" method="dialog">
+      <input name="id" type="hidden">
+      <div class="dialog-head"><div><p class="eyebrow">Pool setup</p><h2 id="pool-dialog-title">Add pool monitor</h2></div><button class="icon-button" type="button" data-action="close-dialog" aria-label="Close">×</button></div>
+      <div class="dialog-body">
+        <div class="form-grid two">
+          <label><span>Monitor name</span><input name="name" maxlength="80" placeholder="Public Pool" required></label>
+          <label><span>Connection type</span><select name="mode"><option value="public_pool_api">Public Pool API</option><option value="local_log">Local log file</option></select></label>
+          <label class="full public-pool-field"><span>Public Pool API URL</span><div class="detect-row"><input name="api_url" maxlength="1024" placeholder="http://192.168.1.213:2019"><button type="button" data-action="detect-public-pool">Auto-detect</button></div><small>PoCiSys reads Public Pool's API only. Umbrel commonly exposes it beside the stratum port.</small></label>
+          <label class="full public-pool-field"><span>Bitcoin address <small>Optional</small></span><input name="bitcoin_address" maxlength="160" placeholder="Auto-detect from miner pool usernames"><small>Used only to show your Public Pool workers. Leave blank for automatic detection.</small></label>
+          <label class="full local-log-field"><span>Local log file path</span><input name="log_path" maxlength="1024" placeholder="C:\mining\ckpool\pool.log"><small>The app tails only new lines and keeps at most 50 matching events.</small></label>
+          <input name="type" type="hidden" value="public_pool">
+        </div>
+        <div id="pool-detect-result" class="test-result"></div>
+        <label class="switch-row enabled-row"><span><strong>Enable this monitor</strong></span><input name="enabled" type="checkbox" role="switch" checked></label>
+      </div>
+      <div class="dialog-actions"><span></span><span></span><button type="button" data-action="close-dialog">Cancel</button><button class="primary" type="submit">Save pool</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status"></div>
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>
