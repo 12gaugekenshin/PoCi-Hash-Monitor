@@ -236,7 +236,7 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.3.3"}
+        return {"ok": True, "version": "1.3.4"}
     if method == "GET" and path == "/api/status":
         return {
             "summary": summary(),
@@ -460,7 +460,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.3.3"
+    server_version = "PoCiSys/1.3.4"
 
     def log_message(self, _format, *_args):
         return
@@ -559,7 +559,7 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.3.3 starting", flush=True)
+    print("PoCiSys Hash Monitor 1.3.4 starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()

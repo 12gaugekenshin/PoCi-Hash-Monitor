@@ -10,22 +10,44 @@ services:
     image: python:3.12-alpine
     restart: on-failure
     init: true
-    working_dir: /app
     stop_grace_period: 15s
     environment:
       POCISYS_CONFIG_PATH: /data/config.json
       POCISYS_HOST: 0.0.0.0
       POCISYS_PORT: "8765"
+      POCISYS_SOURCE_ZIP: https://codeload.github.com/12gaugekenshin/PoCi-Hash-Monitor/zip/refs/heads/main
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONUNBUFFERED: "1"
     volumes:
       - ${APP_DATA_DIR}/data:/data
-      - ./main.py:/app/main.py:ro
-      - ./config.default.json:/app/config.default.json:ro
-      - ./miners:/app/miners:ro
-      - ./services:/app/services:ro
-      - ./web:/app/web:ro
-    command: ["python", "-u", "/app/main.py"]
+    command:
+      - python
+      - -u
+      - -c
+      - |
+        import os
+        import shutil
+        import sys
+        import urllib.request
+        import zipfile
+        from pathlib import Path
+
+        url = os.environ["POCISYS_SOURCE_ZIP"]
+        root = Path("/tmp/pocisys-src")
+        archive = Path("/tmp/pocisys-source.zip")
+        shutil.rmtree(root, ignore_errors=True)
+        root.mkdir(parents=True, exist_ok=True)
+        print(f"PoCiSys bootstrap: downloading app source from {url}", flush=True)
+        urllib.request.urlretrieve(url, archive)
+        with zipfile.ZipFile(archive) as zip_file:
+            zip_file.extractall(root)
+        matches = list(root.glob("*/pocisys-hash-monitor/main.py"))
+        if not matches:
+            raise SystemExit("PoCiSys bootstrap: downloaded source is missing pocisys-hash-monitor/main.py")
+        main_py = matches[0]
+        os.chdir(main_py.parent)
+        os.environ["PYTHONPATH"] = str(main_py.parent)
+        os.execv(sys.executable, [sys.executable, "-u", str(main_py)])
     networks:
       default:
         aliases:
