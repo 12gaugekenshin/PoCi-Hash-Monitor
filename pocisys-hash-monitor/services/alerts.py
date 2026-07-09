@@ -227,6 +227,7 @@ class AlertEngine:
             "PoCiSys Hash Monitor webhook is working.",
             "success",
             url=self.dashboard_link(),
+            require_enabled=False,
         )
         self.discord_last_result = result
         self._record("Discord Test", result.get("reason", "Webhook request completed."), "info", "system")

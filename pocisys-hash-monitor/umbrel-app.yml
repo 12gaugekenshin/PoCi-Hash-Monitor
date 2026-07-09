@@ -2,7 +2,7 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.4.0"
+version: "1.4.2"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: icon.svg
 description: >-
@@ -31,9 +31,9 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Adds API retry handling for Umbrel proxy 502/503/504 responses, safe
-  idempotent miner and pool creation retries, default settings fallback while
-  reconnecting, and API request logging to diagnose backend/proxy disconnects.
+  Fixes Discord setup/testing. Test messages now require only a configured
+  webhook, not enabled alerts; newly pasted webhooks win over the clear-webhook
+  checkbox; and saving settings returns the updated webhook-configured state.
 dependencies: []
 path: ""
 defaultUsername: ""

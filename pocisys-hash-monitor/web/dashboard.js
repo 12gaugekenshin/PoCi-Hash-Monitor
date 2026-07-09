@@ -294,7 +294,9 @@ function renderChipHealth(status) {
     const count = item.chips_total ? `${number(item.chips_healthy, 0)} / ${number(item.chips_total, 0)} ASICs` : item.cores ? `${number(item.cores, 0)} cores reported` : "API health signal";
     const hash = item.hashrate_ths == null ? "" : `${number(item.hashrate_ths, 2)} TH/s`;
     const temp = item.temperature_c == null ? "" : `${number(item.temperature_c)}°C`;
-    const meta = [count, hash, temp].filter(Boolean).join(" · ");
+    const cores = item.chips_total && item.cores ? `${number(item.cores, 0)} cores` : "";
+    const errorPct = item.hardware_error_percent == null ? "" : `${number(item.hardware_error_percent, 2)}% errors`;
+    const meta = [count, cores, hash, temp, errorPct].filter(Boolean).join(" · ");
     return `<article class="chip-card ${item.status === "healthy" ? "healthy" : "warning"}"><div><i></i><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.status || "reported")}</span></div><p>${escapeHtml(meta)}</p>${item.hardware_errors != null ? `<small>${number(item.hardware_errors, 0)} hardware errors</small>` : ""}</article>`;
   }).join("")}</div>`;
 }
@@ -726,7 +728,13 @@ $("#settings-form").addEventListener("submit", async event => {
   submit.disabled = true;
   try {
     const result = await request("/api/settings", {method: "PUT", body: payload});
-    await Promise.all([loadSettings(), refresh()]);
+    if (result.settings) {
+      settings = result.settings;
+      fillSettings();
+    } else {
+      await loadSettings();
+    }
+    await refresh();
     form.elements.webhook_url.value = "";
     form.elements.clear_webhook.checked = false;
     toast(result.restart_required ? "Settings saved. Restart PoCiSys to apply the network change." : "Settings saved.", "success");

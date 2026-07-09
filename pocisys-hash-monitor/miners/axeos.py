@@ -36,9 +36,12 @@ class AxeOSDriver(MinerDriver):
         chip_items = []
         for index in range(asic_count):
             chip_temp = number(asic_temps[index]) if index < len(asic_temps) else None
+            healthy = error_percent < 5
             chip_items.append({
                 "name": f"{model} #{index + 1}" if asic_count > 1 else str(model),
-                "status": "healthy" if error_percent < 5 else "warning",
+                "status": "healthy" if healthy else "warning",
+                "chips_healthy": 1 if healthy else 0,
+                "chips_total": 1,
                 "temperature_c": chip_temp if chip_temp and chip_temp > 0 else None,
                 "hardware_error_percent": error_percent,
                 "cores": integer(first(data, "smallCoreCount"), None) if asic_count == 1 else None,

@@ -246,7 +246,7 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.4.0"}
+        return {"ok": True, "version": "1.4.2"}
     if method == "GET" and path == "/api/status":
         try:
             pool_statuses = pool_logs.status()
@@ -457,10 +457,10 @@ async def api_dispatch(method, path, data):
                 send_share_alerts=bool(data.get("send_share_alerts", True)),
                 verbose_pool_events=bool(data.get("verbose_pool_events", False)),
             )
-            if data.get("clear_webhook"):
-                discord["webhook_url"] = ""
-            elif webhook:
+            if webhook:
                 discord["webhook_url"] = webhook
+            elif data.get("clear_webhook"):
+                discord["webhook_url"] = ""
             if discord["enabled"] and not discord.get("webhook_url"):
                 raise ApiError(400, "Add a Discord webhook URL before enabling Discord")
             updated["odds"].update(
@@ -474,6 +474,7 @@ async def api_dispatch(method, path, data):
         return {
             "ok": True,
             "restart_required": old_port != app_config["dashboard_port"] or old_lan != app_config["lan_access_enabled"],
+            "settings": current_settings(),
         }
     if method == "GET" and path == "/api/alerts":
         return alerts.status()
@@ -508,7 +509,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.4.0"
+    server_version = "PoCiSys/1.4.2"
     protocol_version = "HTTP/1.1"
 
     def log_message(self, _format, *_args):
@@ -632,7 +633,7 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.4.0 starting", flush=True)
+    print("PoCiSys Hash Monitor 1.4.2 starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()
