@@ -8,6 +8,7 @@ Add this Community App Store URL in Umbrel:
 https://github.com/12gaugekenshin/PoCi-Hash-Monitor
 ```
 
-This version uses the public multi-architecture Python image and runs the
-repository code directly, matching the proven MinerwatchUOS installation
-pattern. It does not require GitHub Actions or a custom container package.
+Version 1.3.3 uses the public multi-architecture Python image and runs the
+repository code directly with Umbrel's app proxy pointed at the stable
+`server` service name. It does not require GitHub Actions, pip installs, or a
+custom container package.

@@ -236,7 +236,7 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.3.2"}
+        return {"ok": True, "version": "1.3.3"}
     if method == "GET" and path == "/api/status":
         return {
             "summary": summary(),
@@ -460,7 +460,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.3.2"
+    server_version = "PoCiSys/1.3.3"
 
     def log_message(self, _format, *_args):
         return
@@ -559,12 +559,15 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
+    print("PoCiSys Hash Monitor 1.3.3 starting", flush=True)
+    print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()
     loop_started.wait(10)
-    host = os.environ.get("POCISYS_HOST", "127.0.0.1")
+    host = os.environ.get("POCISYS_HOST", "0.0.0.0")
     port = int(os.environ.get("POCISYS_PORT", "8765"))
     server = PoCiSysServer((host, port), PoCiSysHandler)
+    print(f"PoCiSys Hash Monitor ready on {host}:{port}", flush=True)
     try:
         server.serve_forever(poll_interval=0.5)
     except KeyboardInterrupt:

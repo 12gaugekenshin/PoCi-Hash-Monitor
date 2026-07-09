@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: pocisys-hash-monitor_server_1
+      APP_HOST: server
       APP_PORT: 8765
 
   server:
@@ -11,7 +11,6 @@ services:
     restart: on-failure
     init: true
     working_dir: /app
-    read_only: true
     stop_grace_period: 15s
     environment:
       POCISYS_CONFIG_PATH: /data/config.json
@@ -23,10 +22,12 @@ services:
       - ${APP_DATA_DIR}/data:/data
       - ./main.py:/app/main.py:ro
       - ./config.default.json:/app/config.default.json:ro
-      - ./start.sh:/app/start.sh:ro
       - ./miners:/app/miners:ro
       - ./services:/app/services:ro
       - ./web:/app/web:ro
-    tmpfs:
-      - /tmp:size=16m
-    command: ["/bin/sh", "/app/start.sh"]
+    command: ["python", "-u", "/app/main.py"]
+    networks:
+      default:
+        aliases:
+          - pocisys-hash-monitor_server_1
+          - pocisys-hash-monitor-server-1
