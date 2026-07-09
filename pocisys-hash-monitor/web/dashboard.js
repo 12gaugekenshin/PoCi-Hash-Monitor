@@ -12,6 +12,33 @@ let activeGroup = "All";
 let pointerStart = null;
 let suppressNextClick = false;
 
+const DEFAULT_SETTINGS = {
+  poll_interval_seconds: 10,
+  request_timeout_seconds: 4,
+  alert_cooldown_seconds: 600,
+  dashboard_port: 8765,
+  dashboard_density: "comfortable",
+  dashboard_base_url: "",
+  lan_access_enabled: false,
+  discord_enabled: false,
+  webhook_configured: false,
+  send_offline_alerts: true,
+  send_recovery_alerts: true,
+  send_hashrate_alerts: true,
+  send_temperature_alerts: true,
+  send_best_diff_alerts: true,
+  send_block_found_alerts: true,
+  send_pool_alerts: true,
+  send_pool_switch_alerts: true,
+  send_share_alerts: true,
+  verbose_pool_events: false,
+  btc_enabled: true,
+  bch_enabled: true,
+  auto_network_data: true,
+  manual_btc_network_hashrate_eh: null,
+  manual_bch_network_hashrate_eh: null,
+};
+
 function number(value, decimals = 1) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return "—";
   return Number(value).toLocaleString(undefined, {maximumFractionDigits: decimals});
@@ -88,20 +115,33 @@ function configuredMiner(id) {
   return managedMiners.find(item => item.config.id === id)?.config || null;
 }
 
-async function request(path, {method = "GET", body} = {}) {
-  const response = await fetch(path, {
-    method,
-    cache: "no-store",
-    headers: body === undefined ? {} : {"Content-Type": "application/json"},
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    let message = data.detail || `Request failed (${response.status})`;
-    if (Array.isArray(message)) message = message.map(item => item.msg).join(" · ");
-    throw new Error(message);
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function request(path, {method = "GET", body, retries = 8} = {}) {
+  let lastError = null;
+  const payload = body === undefined ? undefined : JSON.stringify(body);
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const response = await fetch(path, {
+        method,
+        cache: "no-store",
+        headers: body === undefined ? {} : {"Content-Type": "application/json"},
+        body: payload,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) return data;
+      let message = data.detail || `Request failed (${response.status})`;
+      if (Array.isArray(message)) message = message.map(item => item.msg).join(" · ");
+      lastError = new Error(message);
+      if (![502, 503, 504].includes(response.status)) throw lastError;
+    } catch (error) {
+      lastError = error;
+    }
+    if (attempt < retries) {
+      await sleep(Math.min(7500, 400 + attempt * 650));
+    }
   }
-  return data;
+  throw lastError || new Error("Request failed");
 }
 
 function toast(message, kind = "info") {
@@ -402,7 +442,12 @@ async function loadManagement() {
 }
 
 async function loadSettings() {
-  settings = await request("/api/settings");
+  try {
+    settings = await request("/api/settings");
+  } catch (error) {
+    settings = {...DEFAULT_SETTINGS};
+    toast(`Settings using defaults until API reconnects: ${error.message}`, "warning");
+  }
   fillSettings();
 }
 

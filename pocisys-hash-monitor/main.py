@@ -246,7 +246,7 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.3.9"}
+        return {"ok": True, "version": "1.4.0"}
     if method == "GET" and path == "/api/status":
         try:
             pool_statuses = pool_logs.status()
@@ -288,10 +288,23 @@ async def api_dispatch(method, path, data):
         async with config_lock:
             updated = deepcopy(config)
             miner = clean_miner(data)
-            miner["id"] = make_id("miner")
-            if not miner["display_order"]:
-                miner["display_order"] = len(updated["miners"]) + 1
-            updated["miners"].append(miner)
+            existing_index = next(
+                (
+                    index for index, item in enumerate(updated["miners"])
+                    if item.get("ip") == miner["ip"] and item.get("type") == miner["type"]
+                ),
+                None,
+            )
+            if existing_index is not None:
+                miner["id"] = updated["miners"][existing_index].get("id") or make_id("miner")
+                if not miner["display_order"]:
+                    miner["display_order"] = updated["miners"][existing_index].get("display_order") or existing_index + 1
+                updated["miners"][existing_index] = miner
+            else:
+                miner["id"] = make_id("miner")
+                if not miner["display_order"]:
+                    miner["display_order"] = len(updated["miners"]) + 1
+                updated["miners"].append(miner)
             commit_config(updated)
         return {"ok": True, "miner": miner}
     if method == "POST" and path == "/api/miners/reorder":
@@ -351,8 +364,24 @@ async def api_dispatch(method, path, data):
         async with config_lock:
             updated = deepcopy(config)
             pool = clean_pool(data)
-            pool["id"] = make_id("pool")
-            updated["pools"].append(pool)
+            existing_index = next(
+                (
+                    index for index, item in enumerate(updated["pools"])
+                    if item.get("mode") == pool["mode"]
+                    and (
+                        item.get("api_url") == pool.get("api_url")
+                        or item.get("log_path") == pool.get("log_path")
+                        or item.get("name") == pool.get("name")
+                    )
+                ),
+                None,
+            )
+            if existing_index is not None:
+                pool["id"] = updated["pools"][existing_index].get("id") or make_id("pool")
+                updated["pools"][existing_index] = pool
+            else:
+                pool["id"] = make_id("pool")
+                updated["pools"].append(pool)
             commit_config(updated)
         return {"ok": True, "pool": pool}
     if len(parts) == 3 and parts[:2] == ["api", "pools"]:
@@ -479,7 +508,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.3.9"
+    server_version = "PoCiSys/1.4.0"
     protocol_version = "HTTP/1.1"
 
     def log_message(self, _format, *_args):
@@ -555,6 +584,8 @@ class PoCiSysHandler(BaseHTTPRequestHandler):
     def dispatch(self, method):
         path = urllib.parse.urlparse(self.path).path.rstrip("/") or "/"
         try:
+            if path.startswith("/api/") or path == "/health":
+                print(f"PoCiSys request: {method} {path}", flush=True)
             if not path.startswith("/api/") and path != "/health":
                 if method != "GET":
                     raise ApiError(405, "Method not allowed")
@@ -601,7 +632,7 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.3.9 starting", flush=True)
+    print("PoCiSys Hash Monitor 1.4.0 starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()

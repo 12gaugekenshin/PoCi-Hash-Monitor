@@ -2,7 +2,7 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.3.9"
+version: "1.4.0"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: icon.svg
 description: >-
@@ -31,9 +31,9 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Includes the inline-asset and backend watchdog fixes, and improves dialog
-  behavior so dragging to highlight text no longer closes popups or triggers
-  accidental navigation.
+  Adds API retry handling for Umbrel proxy 502/503/504 responses, safe
+  idempotent miner and pool creation retries, default settings fallback while
+  reconnecting, and API request logging to diagnose backend/proxy disconnects.
 dependencies: []
 path: ""
 defaultUsername: ""
