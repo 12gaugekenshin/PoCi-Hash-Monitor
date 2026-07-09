@@ -2,7 +2,7 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.3.4"
+version: "1.3.5"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: icon.svg
 description: >-
@@ -31,9 +31,9 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Fixes Umbrel runtime packaging by removing repo-file bind mounts. The Python
-  container now bootstraps the app source from GitHub at startup, so Umbrel only
-  persists config.json and no custom image build or GitHub Actions are required.
+  Makes Umbrel saves more reliable by using a simple portable config.json write,
+  adding a /data write test at startup, disabling proxy auth injection, and
+  improving request logging for miner and pool save actions.
 dependencies: []
 path: ""
 defaultUsername: ""

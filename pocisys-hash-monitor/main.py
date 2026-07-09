@@ -138,9 +138,16 @@ config_lock = asyncio.Lock()
 def commit_config(updated):
     save_config(CONFIG_PATH, updated)
     apply_in_place(config, updated)
-    alerts.reconfigure()
-    pool_logs.reconfigure(config["pools"])
-    poller.reconfigure()
+    try:
+        alerts.reconfigure()
+        pool_logs.reconfigure(config["pools"])
+        poller.reconfigure()
+    except Exception as exc:
+        print(f"PoCiSys warning: saved config but service reconfigure failed: {exc}", flush=True)
+    print(
+        f"PoCiSys config saved: miners={len(config.get('miners', []))} pools={len(config.get('pools', []))}",
+        flush=True,
+    )
 
 
 def summary():
@@ -236,7 +243,7 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.3.4"}
+        return {"ok": True, "version": "1.3.5"}
     if method == "GET" and path == "/api/status":
         return {
             "summary": summary(),
@@ -460,7 +467,8 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.3.4"
+    server_version = "PoCiSys/1.3.5"
+    protocol_version = "HTTP/1.1"
 
     def log_message(self, _format, *_args):
         return
@@ -471,9 +479,11 @@ class PoCiSysHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("Connection", "close")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
         self.wfile.write(body)
+        self.close_connection = True
 
     def read_json(self):
         try:
@@ -526,6 +536,7 @@ class PoCiSysHandler(BaseHTTPRequestHandler):
         except TimeoutError:
             self.send_json({"detail": "Request timed out"}, 504)
         except Exception as exc:
+            print(f"PoCiSys request error: {method} {path}: {exc}", flush=True)
             self.send_json({"detail": f"Internal error: {exc}"}, 500)
 
     def do_GET(self):
@@ -559,7 +570,7 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.3.4 starting", flush=True)
+    print("PoCiSys Hash Monitor 1.3.5 starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()

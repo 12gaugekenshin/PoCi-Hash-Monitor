@@ -64,14 +64,17 @@ def load_config(path: Path):
 
 
 def save_config(path: Path, config: dict):
-    """Atomically replace config.json so an interrupted write cannot corrupt it."""
-    temporary = path.with_suffix(".json.tmp")
-    with temporary.open("w", encoding="utf-8", newline="\n") as handle:
+    """Write the small app config.
+
+    Umbrel app-data mounts can be backed by appliance-managed filesystems where
+    fsync/atomic-replace behavior is less predictable than a plain tiny write.
+    V1 stores only config.json, so keep this deliberately boring and portable.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
         json.dump(config, handle, indent=2, ensure_ascii=False)
         handle.write("\n")
         handle.flush()
-        os.fsync(handle.fileno())
-    os.replace(temporary, path)
 
 
 def apply_in_place(target: dict, updated: dict):

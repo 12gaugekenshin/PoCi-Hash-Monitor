@@ -5,6 +5,7 @@ services:
     environment:
       APP_HOST: server
       APP_PORT: 8765
+      PROXY_AUTH_ADD: "false"
 
   server:
     image: python:3.12-alpine
@@ -44,6 +45,12 @@ services:
         matches = list(root.glob("*/pocisys-hash-monitor/main.py"))
         if not matches:
             raise SystemExit("PoCiSys bootstrap: downloaded source is missing pocisys-hash-monitor/main.py")
+        data_dir = Path("/data")
+        data_dir.mkdir(parents=True, exist_ok=True)
+        write_test = data_dir / ".pocisys-write-test"
+        write_test.write_text("ok\n", encoding="utf-8")
+        write_test.unlink(missing_ok=True)
+        print("PoCiSys bootstrap: /data write test passed", flush=True)
         main_py = matches[0]
         os.chdir(main_py.parent)
         os.environ["PYTHONPATH"] = str(main_py.parent)
