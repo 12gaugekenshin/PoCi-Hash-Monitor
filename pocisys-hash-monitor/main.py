@@ -225,7 +225,10 @@ async def discover_public_pool(host=None):
             candidate = f"http://{candidate_host}:{port}"
             attempts.append(candidate)
             try:
-                api_url, response = await asyncio.to_thread(probe_public_pool, candidate)
+                api_url, response = await asyncio.wait_for(
+                    asyncio.to_thread(probe_public_pool, candidate, 1.5),
+                    timeout=2.0,
+                )
                 return {
                     "ok": True,
                     "api_url": api_url,
@@ -233,7 +236,7 @@ async def discover_public_pool(host=None):
                     "total_miners": response.get("totalMiners"),
                     "block_height": response.get("blockHeight"),
                 }
-            except (OSError, ValueError):
+            except (asyncio.TimeoutError, OSError, ValueError):
                 continue
     return {"ok": False, "error": "Public Pool API not found", "attempted": attempts}
 
@@ -243,14 +246,19 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.3.5"}
+        return {"ok": True, "version": "1.3.7"}
     if method == "GET" and path == "/api/status":
+        try:
+            pool_statuses = pool_logs.status()
+        except Exception as exc:
+            print(f"PoCiSys warning: pool status failed during /api/status: {exc}", flush=True)
+            pool_statuses = []
         return {
             "summary": summary(),
             "miners": statuses,
             "odds": calculate_odds(statuses, config, network_data.snapshot()),
             "discord": alerts.status(),
-            "pools": pool_logs.status(),
+            "pools": pool_statuses,
             "pool_event_count": len(pool_logs.events),
             "ui": {"dashboard_density": config.get("app", {}).get("dashboard_density", "comfortable")},
         }
@@ -326,7 +334,11 @@ async def api_dispatch(method, path, data):
             return {"ok": True}
 
     if method == "GET" and path == "/api/pools":
-        live = {item["name"]: item for item in pool_logs.status()}
+        try:
+            live = {item["name"]: item for item in pool_logs.status()}
+        except Exception as exc:
+            print(f"PoCiSys warning: pool status failed during /api/pools: {exc}", flush=True)
+            live = {}
         return {
             "pools": [
                 {"config": deepcopy(pool), "status": live.get(pool.get("name"))}
@@ -467,7 +479,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.3.5"
+    server_version = "PoCiSys/1.3.7"
     protocol_version = "HTTP/1.1"
 
     def log_message(self, _format, *_args):
@@ -570,7 +582,7 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.3.5 starting", flush=True)
+    print("PoCiSys Hash Monitor 1.3.7 starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()

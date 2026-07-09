@@ -28,7 +28,10 @@ services:
       - |
         import os
         import shutil
+        import signal
+        import subprocess
         import sys
+        import time
         import urllib.request
         import zipfile
         from pathlib import Path
@@ -54,7 +57,27 @@ services:
         main_py = matches[0]
         os.chdir(main_py.parent)
         os.environ["PYTHONPATH"] = str(main_py.parent)
-        os.execv(sys.executable, [sys.executable, "-u", str(main_py)])
+        state = {"stop": False, "child": None}
+
+        def stop_child(signum, frame):
+            state["stop"] = True
+            child = state.get("child")
+            if child and child.poll() is None:
+                print("PoCiSys supervisor: stopping app process", flush=True)
+                child.terminate()
+
+        signal.signal(signal.SIGTERM, stop_child)
+        signal.signal(signal.SIGINT, stop_child)
+
+        while not state["stop"]:
+            print("PoCiSys supervisor: starting app process", flush=True)
+            child = subprocess.Popen([sys.executable, "-u", str(main_py)], cwd=str(main_py.parent), env=os.environ.copy())
+            state["child"] = child
+            code = child.wait()
+            if state["stop"]:
+                raise SystemExit(0)
+            print(f"PoCiSys supervisor: app process exited with code {code}; restarting in 2 seconds", flush=True)
+            time.sleep(2)
     networks:
       default:
         aliases:

@@ -38,9 +38,9 @@ def _api_json(url: str, timeout: float = 4.0):
     return json.loads(body.decode("utf-8", errors="replace"))
 
 
-def probe_public_pool(api_url: str):
+def probe_public_pool(api_url: str, timeout: float = 4.0):
     base = api_url.strip().rstrip("/")
-    payload = _api_json(f"{base}/api/pool")
+    payload = _api_json(f"{base}/api/pool", timeout=timeout)
     required = {"totalHashRate", "blockHeight", "totalMiners"}
     if not isinstance(payload, dict) or not required.intersection(payload):
         raise ValueError("This does not look like a Public Pool API")

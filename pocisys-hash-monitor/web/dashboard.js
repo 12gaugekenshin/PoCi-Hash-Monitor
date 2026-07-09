@@ -631,8 +631,9 @@ $("#pool-form").addEventListener("submit", async event => {
   try {
     await request(id ? `/api/pools/${encodeURIComponent(id)}` : "/api/pools", {method: id ? "PUT" : "POST", body: payload});
     $("#pool-dialog").close();
-    await Promise.all([loadManagement(), refresh()]);
     toast(id ? "Pool monitor updated." : "Pool monitor added.", "success");
+    loadManagement().catch(error => toast(`Saved, but refresh failed: ${error.message}`, "warning"));
+    refresh().catch(() => {});
   } catch (error) {
     toast(error.message, "error");
   } finally {
