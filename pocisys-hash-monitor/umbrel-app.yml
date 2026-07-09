@@ -2,7 +2,7 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.3.1"
+version: "1.3.2"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: icon.svg
 description: >-
@@ -31,8 +31,9 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocis-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocis-hash-monitor/2.png
 releaseNotes: >-
-  Uses the same direct-source Umbrel installation pattern as the working
-  MinerwatchUOS app. No custom registry image or GitHub Actions are required.
+  Replaced the web server with a Python standard-library implementation.
+  No package installation, compiled wheels, custom image, or GitHub Actions
+  are required at startup.
 dependencies: []
 path: ""
 defaultUsername: ""
