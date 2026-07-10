@@ -186,6 +186,7 @@ def current_settings():
         "poll_interval_seconds": app_config.get("poll_interval_seconds", 10),
         "dashboard_port": app_config.get("dashboard_port", 8765),
         "alert_cooldown_seconds": app_config.get("alert_cooldown_seconds", 600),
+        "offline_alert_grace_seconds": app_config.get("offline_alert_grace_seconds", 60),
         "request_timeout_seconds": app_config.get("request_timeout_seconds", 4),
         "dashboard_density": app_config.get("dashboard_density", "comfortable"),
         "dashboard_base_url": app_config.get("dashboard_base_url", ""),
@@ -246,7 +247,7 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.4.2"}
+        return {"ok": True, "version": "1.4.3"}
     if method == "GET" and path == "/api/status":
         try:
             pool_statuses = pool_logs.status()
@@ -430,6 +431,7 @@ async def api_dispatch(method, path, data):
                 poll_interval_seconds=max(2, min(3600, as_int(data.get("poll_interval_seconds"), 10))),
                 dashboard_port=max(1024, min(65535, as_int(data.get("dashboard_port"), 8765))),
                 alert_cooldown_seconds=max(0, min(86400, as_int(data.get("alert_cooldown_seconds"), 600))),
+                offline_alert_grace_seconds=max(0, min(3600, as_int(data.get("offline_alert_grace_seconds"), 60))),
                 request_timeout_seconds=max(0.5, min(30, as_float(data.get("request_timeout_seconds"), 4))),
                 dashboard_density=density,
                 dashboard_base_url=dashboard_url,
@@ -509,7 +511,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.4.2"
+    server_version = "PoCiSys/1.4.3"
     protocol_version = "HTTP/1.1"
 
     def log_message(self, _format, *_args):
@@ -633,7 +635,7 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.4.2 starting", flush=True)
+    print("PoCiSys Hash Monitor 1.4.3 starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()

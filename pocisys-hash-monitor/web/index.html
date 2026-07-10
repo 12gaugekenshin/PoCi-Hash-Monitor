@@ -89,6 +89,7 @@
             <label><span>Poll interval</span><div class="input-unit"><input name="poll_interval_seconds" type="number" min="2" max="3600" required><em>seconds</em></div></label>
             <label><span>API timeout</span><div class="input-unit"><input name="request_timeout_seconds" type="number" min="0.5" max="30" step="0.5" required><em>seconds</em></div></label>
             <label><span>Alert cooldown</span><div class="input-unit"><input name="alert_cooldown_seconds" type="number" min="0" max="86400" required><em>seconds</em></div></label>
+            <label><span>Offline alert grace</span><div class="input-unit"><input name="offline_alert_grace_seconds" type="number" min="0" max="3600" required><em>seconds</em></div><small>Wait this long before sending miner offline alerts. Prevents Qaxe/LAN flap spam.</small></label>
             <label><span>Dashboard port</span><input name="dashboard_port" type="number" min="1024" max="65535" required><small>Changing the port requires a restart.</small></label>
             <label><span>Miner card layout</span><select name="dashboard_density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
             <label class="switch-row full"><span><strong>LAN dashboard access</strong><small>Listen on your network so dashboard links can open from another device. Requires restart and firewall access.</small></span><input name="lan_access_enabled" type="checkbox" role="switch"></label>

@@ -2,7 +2,7 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.4.2"
+version: "1.4.3"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: icon.svg
 description: >-
@@ -31,9 +31,9 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Fixes Discord setup/testing. Test messages now require only a configured
-  webhook, not enabled alerts; newly pasted webhooks win over the clear-webhook
-  checkbox; and saving settings returns the updated webhook-configured state.
+  Adds an offline alert grace period so flaky miners must stay unreachable
+  before Discord gets a miner-offline alert. Recovery alerts are only sent
+  after an actual offline alert, avoiding noise from short Qaxe/LAN blips.
 dependencies: []
 path: ""
 defaultUsername: ""

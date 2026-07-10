@@ -21,6 +21,7 @@ def normalize_config(value: dict):
     config["app"].setdefault("dashboard_density", "comfortable")
     config["app"].setdefault("dashboard_base_url", "")
     config["app"].setdefault("lan_access_enabled", False)
+    config["app"].setdefault("offline_alert_grace_seconds", 60)
     config["odds"].setdefault("auto_network_data", True)
     discord_defaults = {
         "send_offline_alerts": True,

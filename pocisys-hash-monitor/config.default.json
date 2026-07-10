@@ -3,6 +3,7 @@
     "poll_interval_seconds": 10,
     "dashboard_port": 8765,
     "alert_cooldown_seconds": 600,
+    "offline_alert_grace_seconds": 60,
     "request_timeout_seconds": 4,
     "dashboard_density": "comfortable",
     "dashboard_base_url": "",

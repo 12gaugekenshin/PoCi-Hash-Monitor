@@ -36,6 +36,7 @@ class AlertEngine:
         self.config = config
         self.discord = DiscordWebhook(config.get("discord", {}))
         self.cooldown = config.get("app", {}).get("alert_cooldown_seconds", 600)
+        self.offline_grace = config.get("app", {}).get("offline_alert_grace_seconds", 60)
         self.last_sent = {}
         self.previous = {}
         self.best_diff = {}
@@ -44,6 +45,7 @@ class AlertEngine:
 
     def reconfigure(self):
         self.cooldown = self.config.get("app", {}).get("alert_cooldown_seconds", 600)
+        self.offline_grace = self.config.get("app", {}).get("offline_alert_grace_seconds", 60)
         self.discord.config = self.config.get("discord", {})
 
     def dashboard_link(self, path=""):
@@ -81,13 +83,45 @@ class AlertEngine:
         prior = self.previous.get(miner_key)
         online = bool(status.get("online") and status.get("api_ok"))
         ip_line = f"{name}\nIP: {status['ip']}"
+        now = time.monotonic()
+        offline_since = None
+        offline_alerted = False
 
-        if not online and discord.get("send_offline_alerts", True):
+        if not online:
+            offline_since = (
+                prior.get("offline_since")
+                if prior and not prior.get("online") and prior.get("offline_since") is not None
+                else now
+            )
+            offline_alerted = bool(prior.get("offline_alerted")) if prior else False
+            offline_for = max(0, now - offline_since)
+            status["offline_for_seconds"] = round(offline_for, 1)
+            if offline_for < self.offline_grace:
+                status["warnings"].append(
+                    f"Offline grace period ({int(self.offline_grace - offline_for)}s remaining)"
+                )
+            elif discord.get("send_offline_alerts", True):
+                sent = await self.emit(
+                    f"{miner_key}:offline",
+                    "Miner Offline",
+                    f"{ip_line}\nAPI: failed\nOffline for: {int(offline_for)} seconds",
+                    "critical",
+                    name,
+                    url=miner_url,
+                )
+                offline_alerted = offline_alerted or sent
+        elif prior is not None and not prior.get("online") and prior.get("offline_alerted") and discord.get("send_recovery_alerts", True):
+            await self.emit(
+                f"{miner_key}:recovered", "Miner Recovered", f"{ip_line}\nAPI: healthy",
+                "success", name, True, miner_url,
+            )
+
+        if False and not online and discord.get("send_offline_alerts", True):
             await self.emit(
                 f"{miner_key}:offline", "🚨 Miner Offline", f"{ip_line}\nAPI: failed",
                 "critical", name, url=miner_url,
             )
-        elif prior is not None and not prior.get("online") and discord.get("send_recovery_alerts", True):
+        elif False and prior is not None and not prior.get("online") and discord.get("send_recovery_alerts", True):
             await self.emit(
                 f"{miner_key}:recovered", "✅ Miner Recovered", f"{ip_line}\nAPI: healthy",
                 "success", name, True, miner_url,
@@ -203,6 +237,8 @@ class AlertEngine:
                 status.get("pool", {}).get("source"),
             ),
             "blocks_found": int(status.get("blocks_found") or 0),
+            "offline_since": offline_since,
+            "offline_alerted": offline_alerted,
         }
 
     async def pool_event(self, event: dict):
