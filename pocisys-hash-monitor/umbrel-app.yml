@@ -2,9 +2,9 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.4.3"
+version: "1.4.4"
 tagline: Read-only monitoring for your SHA-256 miner fleet
-icon: icon.svg
+icon: icon.png
 description: >-
   PoCiSys Hash Monitor is a lightweight, read-only dashboard for monitoring
   multiple AxeOS, NerdAxe/NerdQaxe, and LuxOS miners from one place.
@@ -31,9 +31,8 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Adds an offline alert grace period so flaky miners must stay unreachable
-  before Discord gets a miner-offline alert. Recovery alerts are only sent
-  after an actual offline alert, avoiding noise from short Qaxe/LAN blips.
+  Adds the new PoCiSys cat logo to the app icon, header, and a subtle dashboard
+  watermark while keeping the dark fleet-monitoring UI readable and lightweight.
 dependencies: []
 path: ""
 defaultUsername: ""
