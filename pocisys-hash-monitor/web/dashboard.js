@@ -136,6 +136,23 @@ function rainText(value) {
   return String(rounded);
 }
 
+function matrixSpacer(length = 3) {
+  const chars = "01+-*/<>[]{}=:$#";
+  let text = "";
+  for (let i = 0; i < length; i++) text += chars[Math.floor(Math.random() * chars.length)];
+  return text;
+}
+
+function rainStreamForX(xRatio) {
+  const pieces = [];
+  const pieceCount = 7 + Math.floor(Math.random() * 7);
+  for (let i = 0; i < pieceCount; i++) {
+    pieces.push(rainText(rainValueForX(Math.max(0, Math.min(1, xRatio + (Math.random() - 0.5) * 0.08)))));
+    pieces.push(matrixSpacer(2 + Math.floor(Math.random() * 5)));
+  }
+  return pieces.join("");
+}
+
 function resetRainColumn(column, keepX = false) {
   const width = Math.max(1, difficultyRain.width);
   if (!keepX || column.x === undefined) {
@@ -150,16 +167,16 @@ function resetRainColumn(column, keepX = false) {
   const xRatio = Math.max(0, Math.min(1, column.x / width));
   const beyond = xRatio > difficultyRain.activeReach;
   column.spark = column.spark || (beyond && Math.random() < 0.015 + difficultyRain.progress * 0.05);
-  const value = rainValueForX(xRatio);
   column.y = Math.random() * Math.max(1, difficultyRain.height);
   column.speed = 7 + Math.random() * 15 + Math.max(0, difficultyRain.activeReach - xRatio) * 9;
-  column.size = 10 + Math.random() * 5;
-  column.rowGap = column.size * (1.3 + Math.random() * 0.45);
-  column.text = rainText(value);
+  column.size = 11 + Math.random() * 4;
+  column.rowGap = column.size * (1.05 + Math.random() * 0.18);
+  column.stream = rainStreamForX(xRatio);
+  column.streamOffset = Math.floor(Math.random() * column.stream.length);
   column.refreshAt = performance.now() + 1800 + Math.random() * 7200;
   column.alpha = beyond
-    ? (column.spark ? 0.055 + difficultyRain.progress * 0.08 : 0.012)
-    : 0.035 + (1 - xRatio) * 0.07 + Math.random() * 0.045;
+    ? (column.spark ? 0.08 + difficultyRain.progress * 0.11 : 0.008)
+    : 0.055 + (1 - xRatio) * 0.10 + Math.random() * 0.055;
 }
 
 function resizeDifficultyRain() {
@@ -178,7 +195,7 @@ function resizeDifficultyRain() {
     canvas.width = Math.floor(width * dpr);
     canvas.height = Math.floor(height * dpr);
     difficultyRain.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const count = Math.max(34, Math.min(110, Math.floor(width / 17)));
+    const count = Math.max(42, Math.min(140, Math.floor(width / 13)));
     difficultyRain.columns = Array.from({length: count}, () => ({}));
     difficultyRain.columns.forEach(column => resetRainColumn(column, false));
   }
@@ -204,20 +221,25 @@ function drawDifficultyRain(timestamp = 0) {
   difficultyRain.lastFrame = timestamp;
   const ctx = difficultyRain.ctx;
   ctx.clearRect(0, 0, difficultyRain.width, difficultyRain.height);
-  ctx.font = "600 11px 'Cascadia Code', Consolas, monospace";
+  ctx.font = "700 13px 'Cascadia Code', Consolas, monospace";
   ctx.textBaseline = "top";
+  ctx.textAlign = "center";
   for (const column of difficultyRain.columns) {
     if (timestamp > column.refreshAt) resetRainColumn(column, true);
     column.y = (column.y + column.speed * dt) % column.rowGap;
     const xRatio = Math.max(0, Math.min(1, column.x / Math.max(1, difficultyRain.width)));
     const reachFade = xRatio <= difficultyRain.activeReach ? 1 : column.spark ? 0.7 : 0.18;
+    const stream = column.stream || "000000";
+    let row = 0;
     for (let y = column.y - column.rowGap; y < difficultyRain.height + column.rowGap; y += column.rowGap) {
       const wave = 0.62 + Math.sin((timestamp / 1200) + y * 0.018 + column.x * 0.012) * 0.24;
-      const head = ((y + column.y * 3) % (column.rowGap * 9)) < column.rowGap ? 1.7 : 1;
-      const alpha = Math.max(0, column.alpha * wave * head * reachFade);
+      const head = ((y + column.y * 3) % (column.rowGap * 13)) < column.rowGap ? 2.2 : 1;
+      const tail = 0.72 + ((row + column.streamOffset) % 9) / 28;
+      const alpha = Math.max(0, column.alpha * wave * head * tail * reachFade);
       if (alpha < 0.006) continue;
       ctx.fillStyle = column.spark ? `rgba(150, 255, 226, ${alpha})` : `rgba(78, 215, 200, ${alpha})`;
-      ctx.fillText(column.text, column.x, y);
+      ctx.fillText(stream[(row + column.streamOffset) % stream.length], column.x, y);
+      row += 1;
     }
   }
   difficultyRain.raf = requestAnimationFrame(drawDifficultyRain);
