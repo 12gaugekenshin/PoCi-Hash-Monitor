@@ -2,7 +2,7 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.4.14"
+version: "1.4.15"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/main/pocisys-hash-monitor/icon.svg
 description: >-
@@ -31,8 +31,8 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Adds optional Difficulty Rain to the watch screen: a low-burn Matrix-style
-  backdrop driven by live miner and pool best-share difficulty.
+  Refines Difficulty Rain into full-height Matrix-style columns that use
+  best-difficulty signals from the whole monitored miner fleet and pools.
 dependencies: []
 path: ""
 defaultUsername: ""

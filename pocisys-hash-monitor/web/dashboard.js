@@ -22,6 +22,8 @@ const difficultyRain = {
   lastFrame: 0,
   values: [1000, 10000, 1000000],
   activeReach: 0.32,
+  progress: 0,
+  bestDifficulty: 1000,
   blockDifficulty: 1e14,
 };
 
@@ -113,42 +115,51 @@ function collectDifficultyRainValues() {
   const progress = Math.max(0, Math.min(1, (Math.log10(best) - minLog) / (maxLog - minLog || 1)));
   difficultyRain.values = values.length ? values.slice(-24) : [1000, 10000, 1000000];
   difficultyRain.blockDifficulty = blockDifficulty;
-  difficultyRain.activeReach = Math.max(0.28, Math.min(0.97, 0.26 + progress * 0.71));
+  difficultyRain.bestDifficulty = best;
+  difficultyRain.progress = progress;
+  difficultyRain.activeReach = Math.max(0.34, Math.min(0.96, 0.30 + progress * 0.66));
 }
 
 function rainValueForX(xRatio) {
   const minLog = 3;
   const maxLog = Math.max(9, Math.log10(difficultyRain.blockDifficulty || 1e14));
-  const blended = Math.max(0, Math.min(1, xRatio + (Math.random() - 0.5) * 0.18));
+  const blended = Math.max(0, Math.min(1, xRatio + (Math.random() - 0.5) * 0.12));
   const nearby = difficultyRain.values[Math.floor(Math.random() * difficultyRain.values.length)] || 1000;
   const nearbyLog = Math.log10(Math.max(1000, nearby));
-  const targetLog = minLog + Math.pow(blended, 1.35) * (maxLog - minLog);
-  const logValue = targetLog * 0.72 + nearbyLog * 0.28 + (Math.random() - 0.5) * 0.9;
+  const targetLog = minLog + Math.pow(blended, 1.42) * (maxLog - minLog);
+  const logValue = targetLog * 0.78 + nearbyLog * 0.22 + (Math.random() - 0.5) * 0.44;
   return Math.max(1000, Math.pow(10, logValue));
 }
 
 function rainText(value) {
   const rounded = Math.max(1, Math.round(value));
-  if (rounded >= 1e12) return String(rounded);
-  if (rounded >= 1e9 && Math.random() < 0.35) return `${Math.round(rounded / 1e6)}M`;
   return String(rounded);
 }
 
-function resetRainColumn(column, startAbove = false) {
-  const activeWidth = difficultyRain.width * difficultyRain.activeReach;
-  const roll = Math.random();
-  const baseX = roll > 0.94
-    ? activeWidth + Math.random() * (difficultyRain.width - activeWidth) * 0.65
-    : Math.pow(Math.random(), 1.55) * activeWidth;
-  const xRatio = Math.max(0, Math.min(1, baseX / Math.max(1, difficultyRain.width)));
+function resetRainColumn(column, keepX = false) {
+  const width = Math.max(1, difficultyRain.width);
+  if (!keepX || column.x === undefined) {
+    const activeWidth = width * difficultyRain.activeReach;
+    const farSparkChance = 0.015 + difficultyRain.progress * 0.075;
+    column.spark = Math.random() < farSparkChance && difficultyRain.bestDifficulty > 1e7;
+    column.x = column.spark
+      ? activeWidth + Math.random() * Math.max(1, width - activeWidth)
+      : Math.pow(Math.random(), 1.85) * activeWidth;
+    column.x += (Math.random() - 0.5) * 10;
+  }
+  const xRatio = Math.max(0, Math.min(1, column.x / width));
+  const beyond = xRatio > difficultyRain.activeReach;
+  column.spark = column.spark || (beyond && Math.random() < 0.015 + difficultyRain.progress * 0.05);
   const value = rainValueForX(xRatio);
-  column.x = baseX;
-  column.y = startAbove ? -Math.random() * difficultyRain.height : Math.random() * difficultyRain.height;
-  column.speed = 14 + Math.random() * 34 + xRatio * 20;
-  column.size = 10 + Math.random() * 7;
-  column.trail = 4 + Math.floor(Math.random() * 8);
+  column.y = Math.random() * Math.max(1, difficultyRain.height);
+  column.speed = 7 + Math.random() * 15 + Math.max(0, difficultyRain.activeReach - xRatio) * 9;
+  column.size = 10 + Math.random() * 5;
+  column.rowGap = column.size * (1.3 + Math.random() * 0.45);
   column.text = rainText(value);
-  column.alpha = 0.06 + xRatio * 0.16 + Math.random() * 0.06;
+  column.refreshAt = performance.now() + 1800 + Math.random() * 7200;
+  column.alpha = beyond
+    ? (column.spark ? 0.055 + difficultyRain.progress * 0.08 : 0.012)
+    : 0.035 + (1 - xRatio) * 0.07 + Math.random() * 0.045;
 }
 
 function resizeDifficultyRain() {
@@ -167,7 +178,7 @@ function resizeDifficultyRain() {
     canvas.width = Math.floor(width * dpr);
     canvas.height = Math.floor(height * dpr);
     difficultyRain.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const count = Math.max(24, Math.min(96, Math.floor(width / 18)));
+    const count = Math.max(34, Math.min(110, Math.floor(width / 17)));
     difficultyRain.columns = Array.from({length: count}, () => ({}));
     difficultyRain.columns.forEach(column => resetRainColumn(column, false));
   }
@@ -193,17 +204,19 @@ function drawDifficultyRain(timestamp = 0) {
   difficultyRain.lastFrame = timestamp;
   const ctx = difficultyRain.ctx;
   ctx.clearRect(0, 0, difficultyRain.width, difficultyRain.height);
-  ctx.font = "600 12px 'Cascadia Code', Consolas, monospace";
+  ctx.font = "600 11px 'Cascadia Code', Consolas, monospace";
   ctx.textBaseline = "top";
   for (const column of difficultyRain.columns) {
-    column.y += column.speed * dt;
-    if (column.y > difficultyRain.height + column.trail * column.size * 1.7 || Math.random() < 0.002) resetRainColumn(column, true);
-    for (let i = 0; i < column.trail; i++) {
-      const y = column.y - i * column.size * 1.55;
-      if (y < -24 || y > difficultyRain.height + 24) continue;
-      const fade = Math.max(0, 1 - i / column.trail);
-      const pulse = 0.78 + Math.sin((timestamp / 900) + column.x * 0.01) * 0.22;
-      ctx.fillStyle = `rgba(78, 215, 200, ${Math.max(0, column.alpha * fade * pulse)})`;
+    if (timestamp > column.refreshAt) resetRainColumn(column, true);
+    column.y = (column.y + column.speed * dt) % column.rowGap;
+    const xRatio = Math.max(0, Math.min(1, column.x / Math.max(1, difficultyRain.width)));
+    const reachFade = xRatio <= difficultyRain.activeReach ? 1 : column.spark ? 0.7 : 0.18;
+    for (let y = column.y - column.rowGap; y < difficultyRain.height + column.rowGap; y += column.rowGap) {
+      const wave = 0.62 + Math.sin((timestamp / 1200) + y * 0.018 + column.x * 0.012) * 0.24;
+      const head = ((y + column.y * 3) % (column.rowGap * 9)) < column.rowGap ? 1.7 : 1;
+      const alpha = Math.max(0, column.alpha * wave * head * reachFade);
+      if (alpha < 0.006) continue;
+      ctx.fillStyle = column.spark ? `rgba(150, 255, 226, ${alpha})` : `rgba(78, 215, 200, ${alpha})`;
       ctx.fillText(column.text, column.x, y);
     }
   }
