@@ -437,6 +437,10 @@ td small { display: block; color: var(--muted); }
 .settings-card-head p { color: var(--muted); font-size: 12px; }
 .settings-icon { flex: 0 0 auto; display: grid; place-items: center; width: 39px; height: 39px; border: 1px solid #2c455a; border-radius: 11px; color: var(--cyan); background: #11202c; font-weight: 850; font-size: 18px; }
 .discord-color { color: white; border-color: #7079ff; background: #5865f2; }
+.about-card { background: linear-gradient(135deg, rgba(16,23,34,.88), rgba(13,35,42,.76)); }
+.creator-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.creator-links a { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 0 13px; border: 1px solid rgba(75,221,211,.28); border-radius: 999px; color: var(--cyan); background: rgba(75,221,211,.08); font-weight: 800; text-decoration: none; }
+.creator-links a:hover { border-color: rgba(75,221,211,.55); background: rgba(75,221,211,.14); box-shadow: 0 0 22px rgba(75,221,211,.10); }
 .settings-save { grid-column: 1 / -1; position: sticky; bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 13px 15px; border: 1px solid #294057; border-radius: 12px; color: var(--muted); background: rgba(13,21,31,.94); backdrop-filter: blur(14px); box-shadow: 0 12px 40px rgba(0,0,0,.3); }
 
 label { display: block; }
