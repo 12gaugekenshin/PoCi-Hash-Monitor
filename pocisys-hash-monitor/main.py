@@ -27,7 +27,7 @@ CONFIG_PATH = Path(os.environ.get("POCISYS_CONFIG_PATH", ROOT / "config.json")).
 DEFAULT_CONFIG_PATH = ROOT / "config.default.json"
 HOST_PATTERN = re.compile(r"^[A-Za-z0-9_.:-]+$")
 MAX_REQUEST_BYTES = 1024 * 1024
-MINER_TYPES = {"axeos", "bitaxe", "nerdaxe", "nerdqaxe", "luxos"}
+MINER_TYPES = {"axeos", "bitaxe", "nerdaxe", "nerdqaxe", "luxos", "canaan_avalon", "avalon", "cgminer"}
 
 
 class ApiError(Exception):
@@ -248,7 +248,7 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.4.19"}
+        return {"ok": True, "version": "1.4.20"}
     if method == "GET" and path == "/api/status":
         try:
             pool_statuses = pool_logs.status()
@@ -518,7 +518,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.4.19"
+    server_version = "PoCiSys/1.4.20"
     protocol_version = "HTTP/1.1"
 
     def log_message(self, _format, *_args):
@@ -642,7 +642,7 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.4.19 starting", flush=True)
+    print("PoCiSys Hash Monitor 1.4.20 starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()

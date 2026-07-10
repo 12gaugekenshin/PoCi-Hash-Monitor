@@ -1,10 +1,14 @@
 from .axeos import AxeOSDriver
+from .cgminer import AvalonDriver, CgminerDriver
 from .luxos import LuxOSDriver
 from .nerdaxe import NerdAxeDriver
 
 DRIVERS = {
+    "avalon": AvalonDriver,
     "axeos": AxeOSDriver,
     "bitaxe": AxeOSDriver,
+    "canaan_avalon": AvalonDriver,
+    "cgminer": CgminerDriver,
     "luxos": LuxOSDriver,
     "nerdaxe": NerdAxeDriver,
     "nerdqaxe": NerdAxeDriver,

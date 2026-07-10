@@ -59,6 +59,21 @@ const DEFAULT_SETTINGS = {
   manual_bch_network_hashrate_eh: null,
 };
 
+const TYPE_LABELS = {
+  axeos: "AxeOS",
+  bitaxe: "Bitaxe",
+  luxos: "LuxOS",
+  nerdaxe: "NerdAxe",
+  nerdqaxe: "NerdQaxe",
+  canaan_avalon: "Avalon beta",
+  avalon: "Avalon beta",
+  cgminer: "cgminer beta",
+};
+
+function minerTypeLabel(type) {
+  return TYPE_LABELS[String(type || "").toLowerCase()] || String(type || "unknown");
+}
+
 function setIpPrivacy(enabled = hideIps) {
   hideIps = Boolean(enabled);
   localStorage.setItem("pocisys-hide-ips", hideIps ? "true" : "false");
@@ -414,7 +429,7 @@ function minerCard(miner) {
   const healthy = miner.online && miner.api_ok;
   return `<article class="miner-card ${healthy ? "online" : "offline"}" data-action="open-miner" data-id="${escapeHtml(miner.id)}" tabindex="0">
     <div class="card-glow"></div>
-    <div class="miner-head"><i class="status-dot"></i><div class="miner-title"><strong>${escapeHtml(miner.name)}</strong><small>${privateMarkup(miner.ip)}</small></div><span class="type-badge">${escapeHtml(miner.type)}</span></div>
+    <div class="miner-head"><i class="status-dot"></i><div class="miner-title"><strong>${escapeHtml(miner.name)}</strong><small>${privateMarkup(miner.ip)}</small></div><span class="type-badge">${escapeHtml(minerTypeLabel(miner.type))}</span></div>
     <div class="hashrate"><strong>${hash}</strong><span>${unit}</span><small>${escapeHtml(miner.group)}</small></div>
     <div class="miner-details">
       <div class="detail"><label>Temperature</label><span>${temp === null ? "—" : number(temp) + " C"}</span></div>
@@ -479,7 +494,7 @@ function renderManagedMiners() {
       <td><div class="order-buttons"><button data-action="move-miner" data-id="${config.id}" data-direction="-1" ${index === 0 ? "disabled" : ""}>↑</button><button data-action="move-miner" data-id="${config.id}" data-direction="1" ${index === managedMiners.length - 1 ? "disabled" : ""}>↓</button></div></td>
       <td class="${liveClass}">● ${liveText}</td>
       <td><button class="table-link" data-action="open-miner" data-id="${config.id}"><strong>${escapeHtml(config.name)}</strong><small>${privateMarkup(config.ip)}</small></button></td>
-      <td><span class="type-badge">${escapeHtml(config.type)}</span></td><td>${escapeHtml(config.group)}</td>
+      <td><span class="type-badge">${escapeHtml(minerTypeLabel(config.type))}</span></td><td>${escapeHtml(config.group)}</td>
       <td>${status ? `${hash} ${unit}` : "—"}</td><td>${status && highestTemp(status) !== null ? number(highestTemp(status)) + " C" : "—"}</td>
       <td><small>${config.min_hashrate_ths != null ? `Min ${number(config.min_hashrate_ths, 3)} TH/s` : status?.expected_hashrate_ths ? `Auto · 75% of ${number(status.expected_hashrate_ths, 3)} TH/s` : "No hash minimum"} · ${number(config.temp_warning_c, 0)} C / ${number(config.temp_critical_c, 0)} C</small></td>
       <td><div class="row-actions"><button data-action="edit-miner" data-id="${config.id}">Edit</button><button class="danger-text" data-action="delete-miner" data-id="${config.id}">Delete</button></div></td>
@@ -534,7 +549,7 @@ function renderMinerDetail(id) {
     <div class="detail-actions"><a class="button-link" href="http://${escapeHtml(config.ip)}" target="_blank" rel="noopener">Open native dashboard ↗</a><button data-action="edit-miner" data-id="${config.id}">Edit setup</button></div>
   </div>
   <section class="miner-hero ${healthy ? "online" : "offline"}">
-    <div class="hero-grid"></div><div class="hero-ident"><span class="hero-status"><i class="status-dot"></i>${!config.enabled ? "Monitoring disabled" : healthy ? "Live and healthy" : status?.status || "Waiting for miner"}</span><p class="eyebrow">${escapeHtml(config.group)}</p><h1>${escapeHtml(config.name)}</h1><p>${privateMarkup(config.ip)} · ${escapeHtml(config.type)} · ${escapeHtml(status?.firmware || "Firmware unavailable")}</p></div>
+    <div class="hero-grid"></div><div class="hero-ident"><span class="hero-status"><i class="status-dot"></i>${!config.enabled ? "Monitoring disabled" : healthy ? "Live and healthy" : status?.status || "Waiting for miner"}</span><p class="eyebrow">${escapeHtml(config.group)}</p><h1>${escapeHtml(config.name)}</h1><p>${privateMarkup(config.ip)} · ${escapeHtml(minerTypeLabel(config.type))} · ${escapeHtml(status?.firmware || "Firmware unavailable")}</p></div>
     <div class="hero-hash"><strong>${hash}</strong><span>${unit}</span><small>Current hashrate</small></div>
   </section>
   <div class="detail-stat-grid">
@@ -544,7 +559,7 @@ function renderMinerDetail(id) {
     ${detailStat("Best difficulty", escapeHtml(difficulty(status?.difficulty?.best_all_time || status?.difficulty?.best_session)), "Best available")}
   </div>
   <div class="detail-panels">
-    <section class="panel"><div class="panel-title"><h2>Hardware</h2><span class="type-badge">${escapeHtml(config.type)}</span></div><div class="info-list">
+    <section class="panel"><div class="panel-title"><h2>Hardware</h2><span class="type-badge">${escapeHtml(minerTypeLabel(config.type))}</span></div><div class="info-list">
       ${infoRow("Firmware", status?.firmware)}
       ${infoRow("Frequency", status?.frequency_mhz == null ? null : number(status.frequency_mhz), " MHz")}
       ${infoRow("Voltage", status?.voltage_mv == null ? null : number(status.voltage_mv), " mV")}
@@ -625,7 +640,7 @@ function screenMiner(miner) {
   const poolOk = miner.pool?.connected === true || String(miner.pool?.status || "").toLowerCase() === "alive";
   const statusText = healthy ? "Online" : miner.offline_for_seconds ? `Offline ${number(miner.offline_for_seconds, 0)}s` : miner.status || "Offline";
   return `<article class="screen-miner ${healthy ? "online" : "offline"}">
-    <div class="screen-miner-top"><i class="status-dot"></i><div><strong>${escapeHtml(miner.name)}</strong><span>${privateMarkup(miner.ip)}  -  ${escapeHtml(miner.type)}</span></div><em>${escapeHtml(statusText)}</em></div>
+    <div class="screen-miner-top"><i class="status-dot"></i><div><strong>${escapeHtml(miner.name)}</strong><span>${privateMarkup(miner.ip)}  -  ${escapeHtml(minerTypeLabel(miner.type))}</span></div><em>${escapeHtml(statusText)}</em></div>
     <div class="screen-hash"><strong>${hash}</strong><span>${unit}</span></div>
     <div class="screen-mini-grid">
       <span><small>Temp</small><b>${temp === null ? "--" : number(temp) + " C"}</b></span>
@@ -902,7 +917,7 @@ document.addEventListener("click", async event => {
       $("#miner-test-result").innerHTML = `<span class="testing-pulse"></span> Contacting miner…`;
       const result = await request("/api/miners/test", {method: "POST", body: {ip, type: form.elements.type.value}});
       $("#miner-test-result").innerHTML = result.ok
-        ? `<strong class="good">Connection successful</strong><span>${escapeHtml(result.status.firmware || result.status.type)} · ${number(result.status.hashrate_ths, 3)} TH/s · ${number(result.status.ping_ms)} ms</span>`
+        ? `<strong class="good">Connection successful</strong><span>${escapeHtml(result.status.firmware || minerTypeLabel(result.status.type))} · ${number(result.status.hashrate_ths, 3)} TH/s · ${number(result.status.ping_ms)} ms</span>`
         : `<strong class="bad">Could not reach this API</strong><span>${escapeHtml(result.error || result.status?.warnings?.[0] || "Check the address and miner type.")}</span>`;
       target.disabled = false;
     }
