@@ -99,7 +99,7 @@ function appDate(value) {
 
 function appTime(value, options = {}) {
   const date = appDate(value);
-  return date ? date.toLocaleTimeString([], options) : "â€”";
+  return date ? date.toLocaleTimeString([], options) : "--";
 }
 
 function highestTemp(miner) {
@@ -198,7 +198,7 @@ function renderSummary() {
     summaryMetric("Total hashrate", `${number(summary.total_hashrate_ths, 3)} <small>TH/s</small>`, "Live enabled devices", "good"),
     summaryMetric("Miners online", `${summary.online_miners} / ${summary.total_miners}`, `${summary.configured_miners} configured`, onlineClass),
     summaryMetric("Average response", summary.average_ping_ms === null ? "—" : `${number(summary.average_ping_ms)} ms`, "Miner API timing"),
-    summaryMetric("Peak temperature", summary.highest_temperature_c === null ? "—" : `${number(summary.highest_temperature_c)}°C`, "Across current sensors"),
+    summaryMetric("Peak temperature", summary.highest_temperature_c === null ? "—" : `${number(summary.highest_temperature_c)} C`, "Across current sensors"),
     summaryMetric("Valid shares", number(summary.total_valid_shares, 0), "Current counters"),
     summaryMetric("Bad shares", number(summary.total_bad_shares, 0), "Invalid + stale + rejected", summary.total_bad_shares ? "warn" : ""),
     summaryMetric("BTC daily odds", state.odds.btc.available ? percent(state.odds.btc.daily_chance) : "—", state.odds.btc.network_source || "Needs setup"),
@@ -218,7 +218,7 @@ function minerCard(miner) {
     <div class="miner-head"><i class="status-dot"></i><div class="miner-title"><strong>${escapeHtml(miner.name)}</strong><small>${escapeHtml(miner.ip)}</small></div><span class="type-badge">${escapeHtml(miner.type)}</span></div>
     <div class="hashrate"><strong>${hash}</strong><span>${unit}</span><small>${escapeHtml(miner.group)}</small></div>
     <div class="miner-details">
-      <div class="detail"><label>Temperature</label><span>${temp === null ? "—" : number(temp) + "°C"}</span></div>
+      <div class="detail"><label>Temperature</label><span>${temp === null ? "—" : number(temp) + " C"}</span></div>
       <div class="detail"><label>API response</label><span>${miner.ping_ms === null ? "Failed" : number(miner.ping_ms) + " ms"}</span></div>
       <div class="detail"><label>Fan</label><span title="${escapeHtml(fans)}">${escapeHtml(fans)}</span></div>
       <div class="detail"><label>Pool</label><span title="${escapeHtml(miner.pool?.url)}">${escapeHtml(miner.pool?.status || "unknown")}</span></div>
@@ -281,8 +281,8 @@ function renderManagedMiners() {
       <td class="${liveClass}">● ${liveText}</td>
       <td><button class="table-link" data-action="open-miner" data-id="${config.id}"><strong>${escapeHtml(config.name)}</strong><small>${escapeHtml(config.ip)}</small></button></td>
       <td><span class="type-badge">${escapeHtml(config.type)}</span></td><td>${escapeHtml(config.group)}</td>
-      <td>${status ? `${hash} ${unit}` : "—"}</td><td>${status && highestTemp(status) !== null ? number(highestTemp(status)) + "°C" : "—"}</td>
-      <td><small>${config.min_hashrate_ths != null ? `Min ${number(config.min_hashrate_ths, 3)} TH/s` : status?.expected_hashrate_ths ? `Auto · 75% of ${number(status.expected_hashrate_ths, 3)} TH/s` : "No hash minimum"} · ${number(config.temp_warning_c, 0)}° / ${number(config.temp_critical_c, 0)}°</small></td>
+      <td>${status ? `${hash} ${unit}` : "—"}</td><td>${status && highestTemp(status) !== null ? number(highestTemp(status)) + " C" : "—"}</td>
+      <td><small>${config.min_hashrate_ths != null ? `Min ${number(config.min_hashrate_ths, 3)} TH/s` : status?.expected_hashrate_ths ? `Auto · 75% of ${number(status.expected_hashrate_ths, 3)} TH/s` : "No hash minimum"} · ${number(config.temp_warning_c, 0)} C / ${number(config.temp_critical_c, 0)} C</small></td>
       <td><div class="row-actions"><button data-action="edit-miner" data-id="${config.id}">Edit</button><button class="danger-text" data-action="delete-miner" data-id="${config.id}">Delete</button></div></td>
     </tr>`;
   }).join("")}</tbody></table>`;
@@ -306,7 +306,7 @@ function renderChipHealth(status) {
   return `<div class="chip-grid">${items.map(item => {
     const count = item.chips_total ? `${number(item.chips_healthy, 0)} / ${number(item.chips_total, 0)} ASICs` : item.cores ? `${number(item.cores, 0)} cores reported` : "API health signal";
     const hash = item.hashrate_ths == null ? "" : `${number(item.hashrate_ths, 2)} TH/s`;
-    const temp = item.temperature_c == null ? "" : `${number(item.temperature_c)}°C`;
+    const temp = item.temperature_c == null ? "" : `${number(item.temperature_c)} C`;
     const cores = item.chips_total && item.cores ? `${number(item.cores, 0)} cores` : "";
     const errorPct = item.hardware_error_percent == null ? "" : `${number(item.hardware_error_percent, 2)}% errors`;
     const meta = [count, cores, hash, temp, errorPct].filter(Boolean).join(" · ");
@@ -339,7 +339,7 @@ function renderMinerDetail(id) {
     <div class="hero-hash"><strong>${hash}</strong><span>${unit}</span><small>Current hashrate</small></div>
   </section>
   <div class="detail-stat-grid">
-    ${detailStat("Peak temperature", highestTemp(status) === null ? "—" : number(highestTemp(status)) + "°C", "Current sensors")}
+    ${detailStat("Peak temperature", highestTemp(status) === null ? "—" : number(highestTemp(status)) + " C", "Current sensors")}
     ${detailStat("API response", status?.ping_ms === null || status?.ping_ms === undefined ? "—" : number(status.ping_ms) + " ms", status?.api_ok ? "API healthy" : "API unavailable")}
     ${detailStat("Uptime", uptime(status?.uptime_seconds), "Miner reported")}
     ${detailStat("Best difficulty", escapeHtml(difficulty(status?.difficulty?.best_all_time || status?.difficulty?.best_session)), "Best available")}
@@ -356,9 +356,9 @@ function renderMinerDetail(id) {
       ${infoRow("Cooling", fanSummary(status))}
     </div>${performance == null ? "" : `<div class="performance"><span><b>Live performance</b><strong>${number(performance, 1)}%</strong></span><div><i style="width:${Math.min(performance, 100)}%"></i></div></div>`}</section>
     <section class="panel"><div class="panel-title"><h2>Temperatures & cooling</h2></div>
-      ${temperatureItems.length ? `<div class="sensor-grid">${temperatureItems.map(([label, value]) => detailStat(label, `${number(value)}°C`)).join("")}</div>` : `<div class="empty compact-empty">No temperature sensors reported.</div>`}
+      ${temperatureItems.length ? `<div class="sensor-grid">${temperatureItems.map(([label, value]) => detailStat(label, `${number(value)} C`)).join("")}</div>` : `<div class="empty compact-empty">No temperature sensors reported.</div>`}
       ${status?.fans?.length ? `<div class="fan-grid">${status.fans.map(fan => `<div><span>${escapeHtml(fan.name)}</span><strong>${number(fan.rpm, 0)} RPM</strong></div>`).join("")}</div>` : ""}
-      <div class="threshold-note">Alerts at ${number(config.temp_warning_c)}°C · Critical at ${number(config.temp_critical_c)}°C</div></section>
+      <div class="threshold-note">Alerts at ${number(config.temp_warning_c)} C · Critical at ${number(config.temp_critical_c)} C</div></section>
     <section class="panel chip-health-panel"><div class="panel-title"><h2>Chip health</h2><span class="pill">${status?.chip_health?.reported ? `${number(status.chip_health.healthy, 0)} / ${number(status.chip_health.total, 0)} healthy` : "Not reported"}</span></div>${renderChipHealth(status)}</section>
     <section class="panel"><div class="panel-title"><h2>Pool</h2><span class="${status?.pool?.connected ? "good" : "warn"}">${escapeHtml(status?.pool?.status)}</span></div><div class="pool-url">${escapeHtml(status?.pool?.url || "Pool URL not reported")}</div><div class="info-list"><div><span>Connection</span><strong>${status?.pool?.connected == null ? "Unknown" : status.pool.connected ? "Connected" : "Disconnected"}</strong></div>${infoRow("Source", status?.pool?.source)}<div><span>Valid shares</span><strong>${number(shares.valid || 0, 0)}</strong></div></div></section>
     <section class="panel"><div class="panel-title"><h2>Share quality</h2></div><div class="sensor-grid">${detailStat("Valid", number(shares.valid || 0, 0))}${detailStat("Invalid", number(shares.invalid || 0, 0))}${detailStat("Stale", number(shares.stale || 0, 0))}${detailStat("Rejected", number(shares.rejected || 0, 0))}</div></section>
@@ -426,10 +426,10 @@ function screenMiner(miner) {
   const poolOk = miner.pool?.connected === true || String(miner.pool?.status || "").toLowerCase() === "alive";
   const statusText = healthy ? "Online" : miner.offline_for_seconds ? `Offline ${number(miner.offline_for_seconds, 0)}s` : miner.status || "Offline";
   return `<article class="screen-miner ${healthy ? "online" : "offline"}">
-    <div class="screen-miner-top"><i class="status-dot"></i><div><strong>${escapeHtml(miner.name)}</strong><span>${escapeHtml(miner.ip)} Â· ${escapeHtml(miner.type)}</span></div><em>${escapeHtml(statusText)}</em></div>
+    <div class="screen-miner-top"><i class="status-dot"></i><div><strong>${escapeHtml(miner.name)}</strong><span>${escapeHtml(miner.ip)}  -  ${escapeHtml(miner.type)}</span></div><em>${escapeHtml(statusText)}</em></div>
     <div class="screen-hash"><strong>${hash}</strong><span>${unit}</span></div>
     <div class="screen-mini-grid">
-      <span><small>Temp</small><b>${temp === null ? "â€”" : number(temp) + "Â°C"}</b></span>
+      <span><small>Temp</small><b>${temp === null ? "--" : number(temp) + " C"}</b></span>
       <span><small>API</small><b>${miner.ping_ms === null ? "Fail" : number(miner.ping_ms, 0) + " ms"}</b></span>
       <span><small>Pool</small><b class="${poolOk ? "good" : "warn"}">${escapeHtml(miner.pool?.status || "unknown")}</b></span>
       <span><small>Bad</small><b class="${badShares ? "warn" : ""}">${number(badShares, 0)}</b></span>
@@ -445,7 +445,7 @@ function renderScreen() {
   const summary = state.summary || {};
   const miners = state.miners || [];
   const onlineClass = !summary.total_miners ? "" : summary.online_miners === summary.total_miners ? "good" : summary.online_miners ? "warn" : "bad";
-  const hottest = summary.highest_temperature_c === null || summary.highest_temperature_c === undefined ? "â€”" : `${number(summary.highest_temperature_c)}Â°C`;
+  const hottest = summary.highest_temperature_c === null || summary.highest_temperature_c === undefined ? "--" : `${number(summary.highest_temperature_c)} C`;
   const lastPoll = appDate(summary.last_poll);
   $("#screen-time").textContent = new Date().toLocaleTimeString([], {hour: "numeric", minute: "2-digit"});
   $("#screen-updated").textContent = lastPoll ? `Updated ${lastPoll.toLocaleTimeString()}` : "Waiting for first poll";
@@ -454,15 +454,15 @@ function renderScreen() {
     screenStatusCard("Online", `${summary.online_miners || 0} / ${summary.total_miners || 0}`, `${summary.configured_miners || 0} configured`, onlineClass),
     screenStatusCard("Peak temp", hottest, "Current sensors", summary.highest_temperature_c >= 70 ? "warn" : ""),
     screenStatusCard("Bad shares", number(summary.total_bad_shares || 0, 0), "Invalid + stale + rejected", summary.total_bad_shares ? "warn" : ""),
-    screenStatusCard("BTC odds", state.odds?.btc?.available ? `${percent(state.odds.btc.daily_chance)} / day` : "â€”", state.odds?.btc?.network_source || "Network data"),
-    screenStatusCard("BCH odds", state.odds?.bch?.available ? `${percent(state.odds.bch.daily_chance)} / day` : "â€”", state.odds?.bch?.network_source || "Network data"),
+    screenStatusCard("BTC odds", state.odds?.btc?.available ? `${percent(state.odds.btc.daily_chance)} / day` : "--", state.odds?.btc?.network_source || "Network data"),
+    screenStatusCard("BCH odds", state.odds?.bch?.available ? `${percent(state.odds.bch.daily_chance)} / day` : "--", state.odds?.bch?.network_source || "Network data"),
   ].join("");
   $("#screen-fleet-count").textContent = `${miners.length} miner${miners.length === 1 ? "" : "s"}`;
   $("#screen-miners").innerHTML = miners.length ? miners.map(screenMiner).join("") : `<div class="screen-empty"><strong>No miners configured</strong><span>Add miners from the normal dashboard to populate watch screen mode.</span></div>`;
   const pools = state.pools || [];
   $("#screen-pools").innerHTML = pools.length ? pools.map(pool => `<div class="screen-row"><i class="status-dot" style="background:${pool.available ? "var(--green)" : "var(--red)"}"></i><div><strong>${escapeHtml(pool.name)}</strong><span>${escapeHtml(pool.message || "Pool monitor")}</span></div><b>${pool.available && pool.total_hashrate_ths != null ? `${number(pool.total_hashrate_ths, 2)} TH/s` : pool.enabled ? "Enabled" : "Off"}</b></div>`).join("") : `<div class="screen-empty"><strong>No pool monitors</strong><span>Pool cards appear here when configured.</span></div>`;
   const alerts = state.discord?.recent || [];
-  $("#screen-alerts").innerHTML = alerts.length ? alerts.slice(0, 5).map(event => `<div class="screen-row alert"><span>${appTime(event.time, {hour: "numeric", minute: "2-digit"})}</span><div><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${escapeHtml(event.source)} Â· ${escapeHtml(event.message)}</span></div></div>`).join("") : `<div class="screen-empty"><strong>No recent alerts</strong><span>Quiet fleet. The cat approves.</span></div>`;
+  $("#screen-alerts").innerHTML = alerts.length ? alerts.slice(0, 5).map(event => `<div class="screen-row alert"><span>${appTime(event.time, {hour: "numeric", minute: "2-digit"})}</span><div><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${escapeHtml(event.source)}  -  ${escapeHtml(event.message)}</span></div></div>`).join("") : `<div class="screen-empty"><strong>No recent alerts</strong><span>Quiet fleet. The cat approves.</span></div>`;
 }
 
 async function loadPoolEvents() {
