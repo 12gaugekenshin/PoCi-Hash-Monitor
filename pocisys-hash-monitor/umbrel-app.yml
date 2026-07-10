@@ -2,7 +2,7 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.4.18"
+version: "1.4.19"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/main/pocisys-hash-monitor/icon.svg
 description: >-
@@ -31,8 +31,9 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Adds Apache 2.0 licensing and PoCiSys attribution NOTICE files for open
-  source forks and derivative distributions.
+  Adds a Clear Recent Alerts control and a browser-local Hide IPs privacy
+  toggle that visually blurs miner addresses, pool URLs, and alert/pool-event
+  details for safer screenshots and wall displays.
 dependencies: []
 path: ""
 defaultUsername: ""

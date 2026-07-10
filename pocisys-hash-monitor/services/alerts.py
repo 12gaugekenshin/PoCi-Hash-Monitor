@@ -259,6 +259,10 @@ class AlertEngine:
         self._record("Discord Test", result.get("reason", "Webhook request completed."), "info", "system")
         return result
 
+    def clear_recent(self):
+        self.alert_feed.clear()
+        return self.status()
+
     def status(self):
         discord = self.config.get("discord", {})
         return {

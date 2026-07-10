@@ -248,7 +248,7 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.4.18"}
+        return {"ok": True, "version": "1.4.19"}
     if method == "GET" and path == "/api/status":
         try:
             pool_statuses = pool_logs.status()
@@ -485,6 +485,8 @@ async def api_dispatch(method, path, data):
         }
     if method == "GET" and path == "/api/alerts":
         return alerts.status()
+    if method == "POST" and path == "/api/alerts/clear":
+        return alerts.clear_recent()
     if method == "POST" and path == "/api/test-discord":
         return await alerts.test_discord()
     if method == "POST" and path == "/api/poll-now":
@@ -516,7 +518,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.4.18"
+    server_version = "PoCiSys/1.4.19"
     protocol_version = "HTTP/1.1"
 
     def log_message(self, _format, *_args):
@@ -640,7 +642,7 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.4.18 starting", flush=True)
+    print("PoCiSys Hash Monitor 1.4.19 starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()

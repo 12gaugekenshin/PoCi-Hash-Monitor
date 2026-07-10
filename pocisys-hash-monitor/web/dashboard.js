@@ -3,6 +3,8 @@ const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const escapeHtml = (value) => String(value ?? "—").replace(/[&<>"']/g, char => (
   {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]
 ));
+const privateMarkup = (value) => `<span class="ip-value">${escapeHtml(value)}</span>`;
+const privateAttr = (value) => hideIps ? "" : escapeHtml(value);
 
 let state = null;
 let managedMiners = [];
@@ -11,6 +13,7 @@ let settings = null;
 let activeGroup = "All";
 let pointerStart = null;
 let suppressNextClick = false;
+let hideIps = localStorage.getItem("pocisys-hide-ips") === "true";
 const difficultyRain = {
   canvas: null,
   ctx: null,
@@ -55,6 +58,17 @@ const DEFAULT_SETTINGS = {
   manual_btc_network_hashrate_eh: null,
   manual_bch_network_hashrate_eh: null,
 };
+
+function setIpPrivacy(enabled = hideIps) {
+  hideIps = Boolean(enabled);
+  localStorage.setItem("pocisys-hide-ips", hideIps ? "true" : "false");
+  document.body.classList.toggle("privacy-hide-ips", hideIps);
+  const button = $("#ip-privacy-toggle");
+  if (button) {
+    button.textContent = hideIps ? "Show IPs" : "Hide IPs";
+    button.setAttribute("aria-pressed", String(hideIps));
+  }
+}
 
 function number(value, decimals = 1) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return "—";
@@ -400,13 +414,13 @@ function minerCard(miner) {
   const healthy = miner.online && miner.api_ok;
   return `<article class="miner-card ${healthy ? "online" : "offline"}" data-action="open-miner" data-id="${escapeHtml(miner.id)}" tabindex="0">
     <div class="card-glow"></div>
-    <div class="miner-head"><i class="status-dot"></i><div class="miner-title"><strong>${escapeHtml(miner.name)}</strong><small>${escapeHtml(miner.ip)}</small></div><span class="type-badge">${escapeHtml(miner.type)}</span></div>
+    <div class="miner-head"><i class="status-dot"></i><div class="miner-title"><strong>${escapeHtml(miner.name)}</strong><small>${privateMarkup(miner.ip)}</small></div><span class="type-badge">${escapeHtml(miner.type)}</span></div>
     <div class="hashrate"><strong>${hash}</strong><span>${unit}</span><small>${escapeHtml(miner.group)}</small></div>
     <div class="miner-details">
       <div class="detail"><label>Temperature</label><span>${temp === null ? "—" : number(temp) + " C"}</span></div>
       <div class="detail"><label>API response</label><span>${miner.ping_ms === null ? "Failed" : number(miner.ping_ms) + " ms"}</span></div>
       <div class="detail"><label>Fan</label><span title="${escapeHtml(fans)}">${escapeHtml(fans)}</span></div>
-      <div class="detail"><label>Pool</label><span title="${escapeHtml(miner.pool?.url)}">${escapeHtml(miner.pool?.status || "unknown")}</span></div>
+      <div class="detail"><label>Pool</label><span title="${privateAttr(miner.pool?.url)}">${escapeHtml(miner.pool?.status || "unknown")}</span></div>
       <div class="detail"><label>Valid shares</label><span>${number(miner.shares?.valid || 0, 0)}</span></div>
       <div class="detail"><label>Bad shares</label><span>${number(badShares, 0)}</span></div>
       <div class="detail"><label>Best session</label><span title="${escapeHtml(miner.difficulty?.best_session)}">${escapeHtml(difficulty(miner.difficulty?.best_session))}</span></div>
@@ -464,7 +478,7 @@ function renderManagedMiners() {
     return `<tr>
       <td><div class="order-buttons"><button data-action="move-miner" data-id="${config.id}" data-direction="-1" ${index === 0 ? "disabled" : ""}>↑</button><button data-action="move-miner" data-id="${config.id}" data-direction="1" ${index === managedMiners.length - 1 ? "disabled" : ""}>↓</button></div></td>
       <td class="${liveClass}">● ${liveText}</td>
-      <td><button class="table-link" data-action="open-miner" data-id="${config.id}"><strong>${escapeHtml(config.name)}</strong><small>${escapeHtml(config.ip)}</small></button></td>
+      <td><button class="table-link" data-action="open-miner" data-id="${config.id}"><strong>${escapeHtml(config.name)}</strong><small>${privateMarkup(config.ip)}</small></button></td>
       <td><span class="type-badge">${escapeHtml(config.type)}</span></td><td>${escapeHtml(config.group)}</td>
       <td>${status ? `${hash} ${unit}` : "—"}</td><td>${status && highestTemp(status) !== null ? number(highestTemp(status)) + " C" : "—"}</td>
       <td><small>${config.min_hashrate_ths != null ? `Min ${number(config.min_hashrate_ths, 3)} TH/s` : status?.expected_hashrate_ths ? `Auto · 75% of ${number(status.expected_hashrate_ths, 3)} TH/s` : "No hash minimum"} · ${number(config.temp_warning_c, 0)} C / ${number(config.temp_critical_c, 0)} C</small></td>
@@ -520,7 +534,7 @@ function renderMinerDetail(id) {
     <div class="detail-actions"><a class="button-link" href="http://${escapeHtml(config.ip)}" target="_blank" rel="noopener">Open native dashboard ↗</a><button data-action="edit-miner" data-id="${config.id}">Edit setup</button></div>
   </div>
   <section class="miner-hero ${healthy ? "online" : "offline"}">
-    <div class="hero-grid"></div><div class="hero-ident"><span class="hero-status"><i class="status-dot"></i>${!config.enabled ? "Monitoring disabled" : healthy ? "Live and healthy" : status?.status || "Waiting for miner"}</span><p class="eyebrow">${escapeHtml(config.group)}</p><h1>${escapeHtml(config.name)}</h1><p>${escapeHtml(config.ip)} · ${escapeHtml(config.type)} · ${escapeHtml(status?.firmware || "Firmware unavailable")}</p></div>
+    <div class="hero-grid"></div><div class="hero-ident"><span class="hero-status"><i class="status-dot"></i>${!config.enabled ? "Monitoring disabled" : healthy ? "Live and healthy" : status?.status || "Waiting for miner"}</span><p class="eyebrow">${escapeHtml(config.group)}</p><h1>${escapeHtml(config.name)}</h1><p>${privateMarkup(config.ip)} · ${escapeHtml(config.type)} · ${escapeHtml(status?.firmware || "Firmware unavailable")}</p></div>
     <div class="hero-hash"><strong>${hash}</strong><span>${unit}</span><small>Current hashrate</small></div>
   </section>
   <div class="detail-stat-grid">
@@ -545,7 +559,7 @@ function renderMinerDetail(id) {
       ${status?.fans?.length ? `<div class="fan-grid">${status.fans.map(fan => `<div><span>${escapeHtml(fan.name)}</span><strong>${number(fan.rpm, 0)} RPM</strong></div>`).join("")}</div>` : ""}
       <div class="threshold-note">Alerts at ${number(config.temp_warning_c)} C · Critical at ${number(config.temp_critical_c)} C</div></section>
     <section class="panel chip-health-panel"><div class="panel-title"><h2>Chip health</h2><span class="pill">${status?.chip_health?.reported ? `${number(status.chip_health.healthy, 0)} / ${number(status.chip_health.total, 0)} healthy` : "Not reported"}</span></div>${renderChipHealth(status)}</section>
-    <section class="panel"><div class="panel-title"><h2>Pool</h2><span class="${status?.pool?.connected ? "good" : "warn"}">${escapeHtml(status?.pool?.status)}</span></div><div class="pool-url">${escapeHtml(status?.pool?.url || "Pool URL not reported")}</div><div class="info-list"><div><span>Connection</span><strong>${status?.pool?.connected == null ? "Unknown" : status.pool.connected ? "Connected" : "Disconnected"}</strong></div>${infoRow("Source", status?.pool?.source)}<div><span>Valid shares</span><strong>${number(shares.valid || 0, 0)}</strong></div></div></section>
+    <section class="panel"><div class="panel-title"><h2>Pool</h2><span class="${status?.pool?.connected ? "good" : "warn"}">${escapeHtml(status?.pool?.status)}</span></div><div class="pool-url">${privateMarkup(status?.pool?.url || "Pool URL not reported")}</div><div class="info-list"><div><span>Connection</span><strong>${status?.pool?.connected == null ? "Unknown" : status.pool.connected ? "Connected" : "Disconnected"}</strong></div>${infoRow("Source", status?.pool?.source)}<div><span>Valid shares</span><strong>${number(shares.valid || 0, 0)}</strong></div></div></section>
     <section class="panel"><div class="panel-title"><h2>Share quality</h2></div><div class="sensor-grid">${detailStat("Valid", number(shares.valid || 0, 0))}${detailStat("Invalid", number(shares.invalid || 0, 0))}${detailStat("Stale", number(shares.stale || 0, 0))}${detailStat("Rejected", number(shares.rejected || 0, 0))}</div></section>
   </div>`;
 }
@@ -583,13 +597,13 @@ function renderManagedPools() {
     const live = state?.pools?.find(item => item.name === pool.name);
     const source = pool.mode === "public_pool_api" ? pool.api_url : pool.log_path;
     const stats = pool.mode === "public_pool_api" && live?.available ? `<div class="pool-live-stats"><span><small>Pool hashrate</small><strong>${number(live.total_hashrate_ths, 2)} TH/s</strong></span><span><small>Connected miners</small><strong>${number(live.total_miners, 0)}</strong></span><span><small>Block height</small><strong>${number(live.block_height, 0)}</strong></span><span><small>Your workers</small><strong>${live.workers_count == null ? "Address not detected" : number(live.workers_count, 0)}</strong></span></div>${live.workers?.length ? `<div class="worker-list">${live.workers.map(worker => `<div><strong>${escapeHtml(worker.name)}</strong><span>${number(worker.hashrate_ths, 2)} TH/s</span><span>Best ${difficulty(worker.best_difficulty)}</span></div>`).join("")}</div>` : ""}` : "";
-    return `<article class="manage-card ${pool.mode === "public_pool_api" ? "public-pool-card" : ""}"><div class="manage-card-top"><span class="settings-icon">${pool.mode === "public_pool_api" ? "P" : "≋"}</span><div><h2>${escapeHtml(pool.name)}</h2><p>${pool.mode === "public_pool_api" ? "Public Pool · live API" : `${escapeHtml(pool.type)} · local log`}</p></div><span class="pill ${live?.available ? "good-border" : "bad-border"}">${!pool.enabled ? "Disabled" : live?.available ? "Connected" : "Unavailable"}</span></div><div class="path-box">${escapeHtml(source)}</div>${stats}<div class="manage-card-actions"><button data-action="edit-pool" data-id="${pool.id}">Edit</button><button class="danger-text" data-action="delete-pool" data-id="${pool.id}">Delete</button></div></article>`;
+    return `<article class="manage-card ${pool.mode === "public_pool_api" ? "public-pool-card" : ""}"><div class="manage-card-top"><span class="settings-icon">${pool.mode === "public_pool_api" ? "P" : "≋"}</span><div><h2>${escapeHtml(pool.name)}</h2><p>${pool.mode === "public_pool_api" ? "Public Pool · live API" : `${escapeHtml(pool.type)} · local log`}</p></div><span class="pill ${live?.available ? "good-border" : "bad-border"}">${!pool.enabled ? "Disabled" : live?.available ? "Connected" : "Unavailable"}</span></div><div class="path-box">${privateMarkup(source)}</div>${stats}<div class="manage-card-actions"><button data-action="edit-pool" data-id="${pool.id}">Edit</button><button class="danger-text" data-action="delete-pool" data-id="${pool.id}">Delete</button></div></article>`;
   }).join("");
 }
 
 function alertFeed(events) {
   if (!events?.length) return `<div class="empty">No alert activity yet.</div>`;
-  return events.map(event => `<div class="feed-item"><span class="feed-time">${appTime(event.time)}</span><span class="feed-source">${escapeHtml(event.source)}</span><div class="feed-message"><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${escapeHtml(event.message)}</span></div></div>`).join("");
+  return events.map(event => `<div class="feed-item"><span class="feed-time">${appTime(event.time)}</span><span class="feed-source">${escapeHtml(event.source)}</span><div class="feed-message"><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${privateMarkup(event.message)}</span></div></div>`).join("");
 }
 
 function renderAlerts() {
@@ -611,7 +625,7 @@ function screenMiner(miner) {
   const poolOk = miner.pool?.connected === true || String(miner.pool?.status || "").toLowerCase() === "alive";
   const statusText = healthy ? "Online" : miner.offline_for_seconds ? `Offline ${number(miner.offline_for_seconds, 0)}s` : miner.status || "Offline";
   return `<article class="screen-miner ${healthy ? "online" : "offline"}">
-    <div class="screen-miner-top"><i class="status-dot"></i><div><strong>${escapeHtml(miner.name)}</strong><span>${escapeHtml(miner.ip)}  -  ${escapeHtml(miner.type)}</span></div><em>${escapeHtml(statusText)}</em></div>
+    <div class="screen-miner-top"><i class="status-dot"></i><div><strong>${escapeHtml(miner.name)}</strong><span>${privateMarkup(miner.ip)}  -  ${escapeHtml(miner.type)}</span></div><em>${escapeHtml(statusText)}</em></div>
     <div class="screen-hash"><strong>${hash}</strong><span>${unit}</span></div>
     <div class="screen-mini-grid">
       <span><small>Temp</small><b>${temp === null ? "--" : number(temp) + " C"}</b></span>
@@ -647,7 +661,7 @@ function renderScreen() {
   const pools = state.pools || [];
   $("#screen-pools").innerHTML = pools.length ? pools.map(pool => `<div class="screen-row"><i class="status-dot" style="background:${pool.available ? "var(--green)" : "var(--red)"}"></i><div><strong>${escapeHtml(pool.name)}</strong><span>${escapeHtml(pool.message || "Pool monitor")}</span></div><b>${pool.available && pool.total_hashrate_ths != null ? `${number(pool.total_hashrate_ths, 2)} TH/s` : pool.enabled ? "Enabled" : "Off"}</b></div>`).join("") : `<div class="screen-empty"><strong>No pool monitors</strong><span>Pool cards appear here when configured.</span></div>`;
   const alerts = state.discord?.recent || [];
-  $("#screen-alerts").innerHTML = alerts.length ? alerts.slice(0, 5).map(event => `<div class="screen-row alert"><span>${appTime(event.time, {hour: "numeric", minute: "2-digit"})}</span><div><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${escapeHtml(event.source)}  -  ${escapeHtml(event.message)}</span></div></div>`).join("") : `<div class="screen-empty"><strong>No recent alerts</strong><span>Quiet fleet. The cat approves.</span></div>`;
+  $("#screen-alerts").innerHTML = alerts.length ? alerts.slice(0, 5).map(event => `<div class="screen-row alert"><span>${appTime(event.time, {hour: "numeric", minute: "2-digit"})}</span><div><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${escapeHtml(event.source)}  -  ${privateMarkup(event.message)}</span></div></div>`).join("") : `<div class="screen-empty"><strong>No recent alerts</strong><span>Quiet fleet. The cat approves.</span></div>`;
   updateDifficultyRain();
 }
 
@@ -655,7 +669,7 @@ async function loadPoolEvents() {
   try {
     const events = (await request("/api/pool-events")).events || [];
     $("#pool-event-total").textContent = `${events.length} event${events.length === 1 ? "" : "s"}`;
-    $("#pool-events").innerHTML = events.length ? events.map(event => `<div class="feed-item"><span class="feed-time">${appTime(event.time)}</span><span class="feed-source">${escapeHtml(event.pool)}</span><div class="feed-message"><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${escapeHtml(event.line)}</span></div></div>`).join("") : `<div class="empty">Waiting for new important pool events.</div>`;
+    $("#pool-events").innerHTML = events.length ? events.map(event => `<div class="feed-item"><span class="feed-time">${appTime(event.time)}</span><span class="feed-source">${escapeHtml(event.pool)}</span><div class="feed-message"><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${privateMarkup(event.line)}</span></div></div>`).join("") : `<div class="empty">Waiting for new important pool events.</div>`;
   } catch (_) {}
 }
 
@@ -815,6 +829,19 @@ async function testDiscord(button) {
   }
 }
 
+async function clearRecentAlerts(button) {
+  button.disabled = true;
+  try {
+    const result = await request("/api/alerts/clear", {method: "POST"});
+    state.discord = result;
+    renderAlerts();
+    renderScreen();
+    toast("Recent alerts cleared.", "success");
+  } finally {
+    button.disabled = false;
+  }
+}
+
 document.addEventListener("click", async event => {
   if (suppressNextClick || window.getSelection()?.toString()) {
     suppressNextClick = false;
@@ -848,6 +875,12 @@ document.addEventListener("click", async event => {
       target.disabled = false;
     }
     if (action === "test-discord") await testDiscord(target);
+    if (action === "clear-alerts") await clearRecentAlerts(target);
+    if (action === "toggle-ip-privacy") {
+      setIpPrivacy(!hideIps);
+      renderAll();
+      return;
+    }
     if (action === "detect-public-pool") {
       const form = $("#pool-form");
       target.disabled = true;
@@ -855,7 +888,7 @@ document.addEventListener("click", async event => {
       const result = await request("/api/pools/discover", {method: "POST", body: {host: null}});
       if (result.ok) {
         form.elements.api_url.value = result.api_url;
-        $("#pool-detect-result").innerHTML = `<strong class="good">Public Pool found</strong><span>${escapeHtml(result.api_url)} · ${number(result.total_miners, 0)} connected miners</span>`;
+        $("#pool-detect-result").innerHTML = `<strong class="good">Public Pool found</strong><span>${privateMarkup(result.api_url)} · ${number(result.total_miners, 0)} connected miners</span>`;
       } else {
         $("#pool-detect-result").innerHTML = `<strong class="bad">Public Pool not found</strong><span>Enter its API URL manually. The stratum URL itself is not the web API.</span>`;
       }
@@ -1025,6 +1058,7 @@ window.addEventListener("resize", () => {
   updateDifficultyRain();
 });
 document.addEventListener("visibilitychange", updateDifficultyRain);
+setIpPrivacy(hideIps);
 route();
 Promise.all([refresh(), loadManagement(), loadSettings()]).catch(error => toast(error.message, "error"));
 setInterval(refresh, 5000);

@@ -24,6 +24,7 @@
       <a href="/settings" data-link>Settings</a>
     </nav>
     <div class="top-actions">
+      <button class="privacy-button" id="ip-privacy-toggle" data-action="toggle-ip-privacy" aria-pressed="false">Hide IPs</button>
       <button class="primary small" data-action="add-miner">+ Add miner</button>
       <div class="connection"><i></i><span id="connection-text">Connecting · Read-only</span></div>
     </div>
@@ -76,7 +77,7 @@
     <section id="page-alerts" class="page">
       <div class="page-heading">
         <div><p class="eyebrow">Health checks</p><h1>Alerts</h1><p>Recent in-memory activity and Discord delivery status.</p></div>
-        <button data-action="test-discord">Send Discord test</button>
+        <div class="heading-actions"><button data-action="clear-alerts">Clear recent alerts</button><button data-action="test-discord">Send Discord test</button></div>
       </div>
       <div id="discord-status"></div>
       <section class="panel feed-panel"><div class="panel-title"><h2>Recent alert activity</h2><span class="pill">25 max</span></div><div id="alert-events" class="feed"></div></section>

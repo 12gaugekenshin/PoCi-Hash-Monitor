@@ -73,6 +73,29 @@ button {
   cursor: pointer;
 }
 button:hover { border-color: var(--cyan); }
+.privacy-button {
+  padding: 7px 11px;
+  border-color: rgba(101, 169, 255, .32);
+  color: #9fb1c7;
+  background: rgba(21, 35, 52, .72);
+  font-size: 12px;
+}
+.privacy-button[aria-pressed="true"] {
+  border-color: rgba(78, 215, 200, .58);
+  color: #041412;
+  background: linear-gradient(135deg, #64e2d4, #3ab8b0);
+}
+.ip-value {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: baseline;
+  transition: filter .16s ease, opacity .16s ease;
+}
+.privacy-hide-ips .ip-value {
+  filter: blur(6px);
+  opacity: .52;
+  user-select: none;
+}
 
 .topbar {
   height: 66px;
