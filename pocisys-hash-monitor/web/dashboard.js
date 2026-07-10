@@ -599,12 +599,12 @@ function renderOdds() {
 
 function renderDashboardPools() {
   const pools = state.pools || [];
-  $("#dashboard-pools").innerHTML = pools.length ? pools.map(pool => `<div class="network-line"><span class="status-dot" style="background:${pool.available ? "var(--green)" : "var(--red)"}"></span><div><strong>${escapeHtml(pool.name)}</strong><small>${escapeHtml(pool.message || (pool.mode === "local_log" ? "Local log monitor" : "Waiting for API"))}</small></div><strong>${pool.available && pool.total_hashrate_ths != null ? `${number(pool.total_hashrate_ths, 2)} TH/s` : pool.enabled ? "Enabled" : "Disabled"}</strong></div>`).join("") : `<div class="empty-inline"><span>No pool monitors yet.</span><button data-action="add-pool">Add one</button></div>`;
+  $("#dashboard-pools").innerHTML = pools.length ? pools.map(pool => `<div class="network-line"><span class="status-dot" style="background:${pool.available ? "var(--green)" : "var(--red)"}"></span><div><strong>${escapeHtml(pool.name)}</strong><small>${escapeHtml(pool.message || (pool.mode === "local_log" ? "Mounted local log" : "Waiting for local pool API"))}</small></div><strong>${pool.available && pool.total_hashrate_ths != null ? `${number(pool.total_hashrate_ths, 2)} TH/s` : pool.enabled ? "Enabled" : "Disabled"}</strong></div>`).join("") : `<div class="empty-inline"><span>No local pool monitors yet.</span><button data-action="add-pool">Add local pool</button></div>`;
 }
 
 function renderManagedPools() {
   if (!managedPools.length) {
-    $("#pool-management").innerHTML = `<div class="empty-action pool-empty"><span class="empty-icon">≋</span><h2>No pool monitors</h2><p>Auto-detect Public Pool from your miner connections, or add a local log viewer.</p><button data-action="add-pool">Connect Public Pool</button></div>`;
+    $("#pool-management").innerHTML = `<div class="empty-action pool-empty"><span class="empty-icon">≋</span><h2>No local pool monitors</h2><p>Connect a self-hosted Public Pool API or add a mounted local pool log viewer.</p><button data-action="add-pool">Connect local pool</button></div>`;
     return;
   }
   $("#pool-management").innerHTML = managedPools.map(entry => {
@@ -612,7 +612,7 @@ function renderManagedPools() {
     const live = state?.pools?.find(item => item.name === pool.name);
     const source = pool.mode === "public_pool_api" ? pool.api_url : pool.log_path;
     const stats = pool.mode === "public_pool_api" && live?.available ? `<div class="pool-live-stats"><span><small>Pool hashrate</small><strong>${number(live.total_hashrate_ths, 2)} TH/s</strong></span><span><small>Connected miners</small><strong>${number(live.total_miners, 0)}</strong></span><span><small>Block height</small><strong>${number(live.block_height, 0)}</strong></span><span><small>Your workers</small><strong>${live.workers_count == null ? "Address not detected" : number(live.workers_count, 0)}</strong></span></div>${live.workers?.length ? `<div class="worker-list">${live.workers.map(worker => `<div><strong>${escapeHtml(worker.name)}</strong><span>${number(worker.hashrate_ths, 2)} TH/s</span><span>Best ${difficulty(worker.best_difficulty)}</span></div>`).join("")}</div>` : ""}` : "";
-    return `<article class="manage-card ${pool.mode === "public_pool_api" ? "public-pool-card" : ""}"><div class="manage-card-top"><span class="settings-icon">${pool.mode === "public_pool_api" ? "P" : "≋"}</span><div><h2>${escapeHtml(pool.name)}</h2><p>${pool.mode === "public_pool_api" ? "Public Pool · live API" : `${escapeHtml(pool.type)} · local log`}</p></div><span class="pill ${live?.available ? "good-border" : "bad-border"}">${!pool.enabled ? "Disabled" : live?.available ? "Connected" : "Unavailable"}</span></div><div class="path-box">${privateMarkup(source)}</div>${stats}<div class="manage-card-actions"><button data-action="edit-pool" data-id="${pool.id}">Edit</button><button class="danger-text" data-action="delete-pool" data-id="${pool.id}">Delete</button></div></article>`;
+    return `<article class="manage-card ${pool.mode === "public_pool_api" ? "public-pool-card" : ""}"><div class="manage-card-top"><span class="settings-icon">${pool.mode === "public_pool_api" ? "P" : "≋"}</span><div><h2>${escapeHtml(pool.name)}</h2><p>${pool.mode === "public_pool_api" ? "Self-hosted Public Pool · live API" : `${escapeHtml(pool.type)} · mounted local log`}</p></div><span class="pill ${live?.available ? "good-border" : "bad-border"}">${!pool.enabled ? "Disabled" : live?.available ? "Connected" : "Unavailable"}</span></div><div class="path-box">${privateMarkup(source)}</div>${stats}<div class="manage-card-actions"><button data-action="edit-pool" data-id="${pool.id}">Edit</button><button class="danger-text" data-action="delete-pool" data-id="${pool.id}">Delete</button></div></article>`;
   }).join("");
 }
 
@@ -624,7 +624,7 @@ function alertFeed(events) {
 function renderAlerts() {
   const discord = state.discord;
   const label = discord.discord_enabled && discord.discord_configured ? "Ready" : discord.discord_configured ? "Configured but disabled" : "Not configured";
-  $("#discord-status").innerHTML = `<div class="discord-card"><span class="discord-icon">D</span><div><strong>Dashboard-wide Discord webhook · <span class="${discord.discord_enabled && discord.discord_configured ? "good" : "warn"}">${label}</span></strong><p>One webhook covers every enabled miner. Block events send immediately; other repeated conditions observe the configured cooldown.</p></div><a class="button-link" href="/settings" data-link>Configure</a></div>`;
+  $("#discord-status").innerHTML = `<div class="discord-card"><span class="discord-icon">D</span><div><strong>Dashboard-wide Discord webhook · <span class="${discord.discord_enabled && discord.discord_configured ? "good" : "warn"}">${label}</span></strong><p>One webhook covers miners and local pool critical events. Blocks/candidates send immediately; repeated conditions use cooldowns.</p></div><a class="button-link" href="/settings" data-link>Configure</a></div>`;
   $("#alert-events").innerHTML = alertFeed(discord.recent);
 }
 
@@ -674,7 +674,7 @@ function renderScreen() {
   $("#screen-fleet-count").textContent = `${miners.length} miner${miners.length === 1 ? "" : "s"}`;
   $("#screen-miners").innerHTML = miners.length ? miners.map(screenMiner).join("") : `<div class="screen-empty"><strong>No miners configured</strong><span>Add miners from the normal dashboard to populate watch screen mode.</span></div>`;
   const pools = state.pools || [];
-  $("#screen-pools").innerHTML = pools.length ? pools.map(pool => `<div class="screen-row"><i class="status-dot" style="background:${pool.available ? "var(--green)" : "var(--red)"}"></i><div><strong>${escapeHtml(pool.name)}</strong><span>${escapeHtml(pool.message || "Pool monitor")}</span></div><b>${pool.available && pool.total_hashrate_ths != null ? `${number(pool.total_hashrate_ths, 2)} TH/s` : pool.enabled ? "Enabled" : "Off"}</b></div>`).join("") : `<div class="screen-empty"><strong>No pool monitors</strong><span>Pool cards appear here when configured.</span></div>`;
+  $("#screen-pools").innerHTML = pools.length ? pools.map(pool => `<div class="screen-row"><i class="status-dot" style="background:${pool.available ? "var(--green)" : "var(--red)"}"></i><div><strong>${escapeHtml(pool.name)}</strong><span>${escapeHtml(pool.message || "Local pool monitor")}</span></div><b>${pool.available && pool.total_hashrate_ths != null ? `${number(pool.total_hashrate_ths, 2)} TH/s` : pool.enabled ? "Enabled" : "Off"}</b></div>`).join("") : `<div class="screen-empty"><strong>No local pool monitors</strong><span>Local pool cards appear here when configured.</span></div>`;
   const alerts = state.discord?.recent || [];
   $("#screen-alerts").innerHTML = alerts.length ? alerts.slice(0, 5).map(event => `<div class="screen-row alert"><span>${appTime(event.time, {hour: "numeric", minute: "2-digit"})}</span><div><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${escapeHtml(event.source)}  -  ${privateMarkup(event.message)}</span></div></div>`).join("") : `<div class="screen-empty"><strong>No recent alerts</strong><span>Quiet fleet. The cat approves.</span></div>`;
   updateDifficultyRain();
@@ -684,7 +684,7 @@ async function loadPoolEvents() {
   try {
     const events = (await request("/api/pool-events")).events || [];
     $("#pool-event-total").textContent = `${events.length} event${events.length === 1 ? "" : "s"}`;
-    $("#pool-events").innerHTML = events.length ? events.map(event => `<div class="feed-item"><span class="feed-time">${appTime(event.time)}</span><span class="feed-source">${escapeHtml(event.pool)}</span><div class="feed-message"><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${privateMarkup(event.line)}</span></div></div>`).join("") : `<div class="empty">Waiting for new important pool events.</div>`;
+    $("#pool-events").innerHTML = events.length ? events.map(event => `<div class="feed-item"><span class="feed-time">${appTime(event.time)}</span><span class="feed-source">${escapeHtml(event.pool)}</span><div class="feed-message"><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${privateMarkup(event.line)}</span></div></div>`).join("") : `<div class="empty">Waiting for new important local pool events.</div>`;
   } catch (_) {}
 }
 
@@ -781,7 +781,7 @@ function openPoolDialog(id = null) {
   form.reset();
   setFormValue(form, "id", "");
   setFormValue(form, "enabled", true);
-  setFormValue(form, "name", "Public Pool");
+  setFormValue(form, "name", "My Public Pool");
   setFormValue(form, "type", "public_pool");
   setFormValue(form, "mode", "public_pool_api");
   $("#pool-detect-result").innerHTML = "";
@@ -791,7 +791,7 @@ function openPoolDialog(id = null) {
     Object.entries(config).forEach(([key, value]) => setFormValue(form, key, value));
     $("#pool-dialog-title").textContent = `Edit ${config.name}`;
   } else {
-    $("#pool-dialog-title").textContent = "Connect pool";
+    $("#pool-dialog-title").textContent = "Connect local pool";
   }
   syncPoolFields();
   dialog.showModal();
@@ -827,10 +827,10 @@ async function deleteMiner(id) {
 
 async function deletePool(id) {
   const config = managedPools.find(item => item.config.id === id)?.config;
-  if (!config || !confirm(`Remove the “${config.name}” pool monitor? The original log file is untouched.`)) return;
+  if (!config || !confirm(`Remove the “${config.name}” local pool monitor? The original log file is untouched.`)) return;
   await request(`/api/pools/${encodeURIComponent(id)}`, {method: "DELETE"});
   await Promise.all([loadManagement(), refresh()]);
-  toast("Pool monitor removed.", "success");
+  toast("Local pool monitor removed.", "success");
 }
 
 async function testDiscord(button) {
@@ -903,9 +903,9 @@ document.addEventListener("click", async event => {
       const result = await request("/api/pools/discover", {method: "POST", body: {host: null}});
       if (result.ok) {
         form.elements.api_url.value = result.api_url;
-        $("#pool-detect-result").innerHTML = `<strong class="good">Public Pool found</strong><span>${privateMarkup(result.api_url)} · ${number(result.total_miners, 0)} connected miners</span>`;
+        $("#pool-detect-result").innerHTML = `<strong class="good">Self-hosted Public Pool found</strong><span>${privateMarkup(result.api_url)} · ${number(result.total_miners, 0)} connected miners</span>`;
       } else {
-        $("#pool-detect-result").innerHTML = `<strong class="bad">Public Pool not found</strong><span>Enter its API URL manually. The stratum URL itself is not the web API.</span>`;
+        $("#pool-detect-result").innerHTML = `<strong class="bad">Local Public Pool API not found</strong><span>Enter the self-hosted pool HTTP API URL manually. External stratum URLs are not stats APIs.</span>`;
       }
       target.disabled = false;
     }
@@ -983,7 +983,7 @@ $("#pool-form").addEventListener("submit", async event => {
   try {
     await request(id ? `/api/pools/${encodeURIComponent(id)}` : "/api/pools", {method: id ? "PUT" : "POST", body: payload});
     $("#pool-dialog").close();
-    toast(id ? "Pool monitor updated." : "Pool monitor added.", "success");
+    toast(id ? "Local pool monitor updated." : "Local pool monitor added.", "success");
     loadManagement().catch(error => toast(`Saved, but refresh failed: ${error.message}`, "warning"));
     refresh().catch(() => {});
   } catch (error) {

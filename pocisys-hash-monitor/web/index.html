@@ -17,7 +17,7 @@
     <nav>
       <a href="/" data-link>Dashboard</a>
       <a href="/miners" data-link>Miners</a>
-      <a href="/pools" data-link>Pools</a>
+      <a href="/pools" data-link>Local Pool</a>
       <a href="/odds" data-link>Block Odds</a>
       <a href="/alerts" data-link>Alerts</a>
       <a href="/screen" data-link>Screen</a>
@@ -44,7 +44,7 @@
       <div id="dashboard-miners"></div>
       <div class="split">
         <section class="panel"><div class="panel-title"><h2>Block odds</h2><a href="/odds" data-link>Details →</a></div><div id="dashboard-odds"></div></section>
-        <section class="panel"><div class="panel-title"><h2>Pool monitor</h2><a href="/pools" data-link>Event feed →</a></div><div id="dashboard-pools"></div></section>
+        <section class="panel"><div class="panel-title"><h2>Local pool monitor</h2><a href="/pools" data-link>Event feed →</a></div><div id="dashboard-pools"></div></section>
       </div>
     </section>
 
@@ -62,8 +62,8 @@
 
     <section id="page-pools" class="page">
       <div class="page-heading">
-        <div><p class="eyebrow">Live · bounded memory</p><h1>Pool monitor</h1><p>Connect Public Pool directly or tail a local log. Only current data and the latest 50 events stay in memory.</p></div>
-        <button class="primary" data-action="add-pool">+ Connect pool</button>
+        <div><p class="eyebrow">Self-hosted pool · bounded memory</p><h1>Local pool monitor</h1><p>Connect a self-hosted Public Pool HTTP API or tail a mounted local pool log. External stratum URLs are mining endpoints, not stats APIs.</p></div>
+        <button class="primary" data-action="add-pool">+ Connect local pool</button>
       </div>
       <div id="pool-management" class="management-grid"></div>
       <section class="panel feed-panel"><div class="panel-title"><h2>Live event feed</h2><span id="pool-event-total" class="pill">0 events</span></div><div id="pool-events" class="feed"></div></section>
@@ -107,7 +107,7 @@
           </section>
           <aside class="screen-side">
             <section class="screen-panel">
-              <div class="screen-panel-title"><h2>Pools</h2><span class="pill">Live</span></div>
+              <div class="screen-panel-title"><h2>Local pools</h2><span class="pill">Live</span></div>
               <div id="screen-pools" class="screen-list"></div>
             </section>
             <section class="screen-panel">
@@ -150,10 +150,10 @@
             <label class="switch-row"><span><strong>Temperature</strong><small>Per-miner warning and critical limits.</small></span><input name="send_temperature_alerts" type="checkbox" role="switch"></label>
             <label class="switch-row"><span><strong>Best-difficulty alerts</strong><small>Notify when a live API reports a new best.</small></span><input name="send_best_diff_alerts" type="checkbox" role="switch"></label>
             <label class="switch-row"><span><strong>Block found</strong><small>Any miner's block counter increases.</small></span><input name="send_block_found_alerts" type="checkbox" role="switch"></label>
-            <label class="switch-row"><span><strong>Pool errors</strong><small>Disconnects, RPC errors, and critical log events.</small></span><input name="send_pool_alerts" type="checkbox" role="switch"></label>
+            <label class="switch-row"><span><strong>Local pool critical alerts</strong><small>RPC/node errors, security-looking log events, critical warnings, and block/candidate events only.</small></span><input name="send_pool_alerts" type="checkbox" role="switch"></label>
             <label class="switch-row"><span><strong>Pool switches</strong><small>A miner changes active pool or fallback source.</small></span><input name="send_pool_switch_alerts" type="checkbox" role="switch"></label>
             <label class="switch-row"><span><strong>Bad-share increases</strong><small>New rejected, invalid, or stale shares.</small></span><input name="send_share_alerts" type="checkbox" role="switch"></label>
-            <label class="switch-row"><span><strong>Verbose pool activity</strong><small>Rate-limited activity messages; off avoids accepted-share spam.</small></span><input name="verbose_pool_events" type="checkbox" role="switch"></label>
+            <label class="switch-row"><span><strong>Verbose local pool activity</strong><small>Optional rate-limited activity messages. Off by default so accepted shares and normal chatter do not spam Discord.</small></span><input name="verbose_pool_events" type="checkbox" role="switch"></label>
           </div>
           <button type="button" data-action="test-discord">Send test message</button>
         </section>
@@ -201,14 +201,14 @@
   <dialog id="pool-dialog" class="app-dialog">
     <form id="pool-form" method="dialog">
       <input name="id" type="hidden">
-      <div class="dialog-head"><div><p class="eyebrow">Pool setup</p><h2 id="pool-dialog-title">Add pool monitor</h2></div><button class="icon-button" type="button" data-action="close-dialog" aria-label="Close">×</button></div>
+      <div class="dialog-head"><div><p class="eyebrow">Local pool setup</p><h2 id="pool-dialog-title">Add local pool monitor</h2></div><button class="icon-button" type="button" data-action="close-dialog" aria-label="Close">×</button></div>
       <div class="dialog-body">
         <div class="form-grid two">
-          <label><span>Monitor name</span><input name="name" maxlength="80" placeholder="Public Pool" required></label>
-          <label><span>Connection type</span><select name="mode"><option value="public_pool_api">Public Pool API</option><option value="local_log">Local log file</option></select></label>
-          <label class="full public-pool-field"><span>Public Pool API URL</span><div class="detect-row"><input name="api_url" maxlength="1024" placeholder="http://public-pool.local:2019"><button type="button" data-action="detect-public-pool">Auto-detect</button></div><small>PoCiSys reads Public Pool's API only. Umbrel commonly exposes it beside the stratum port.</small></label>
-          <label class="full public-pool-field"><span>Bitcoin address <small>Optional</small></span><input name="bitcoin_address" maxlength="160" placeholder="Auto-detect from miner pool usernames"><small>Used only to show your Public Pool workers. Leave blank for automatic detection.</small></label>
-          <label class="full local-log-field"><span>Local log file path</span><input name="log_path" maxlength="1024" placeholder="/var/log/public-pool/pool.log"><small>The app tails only new lines and keeps at most 50 matching events.</small></label>
+          <label><span>Monitor name</span><input name="name" maxlength="80" placeholder="My Public Pool" required></label>
+          <label><span>Connection type</span><select name="mode"><option value="public_pool_api">Self-hosted Public Pool API</option><option value="local_log">Mounted local log file</option></select></label>
+          <label class="full public-pool-field"><span>Self-hosted Public Pool API URL</span><div class="detect-row"><input name="api_url" maxlength="1024" placeholder="http://pool-host.local:2019"><button type="button" data-action="detect-public-pool">Auto-detect</button></div><small>Use the HTTP API for a pool you host/control. Do not paste an external stratum mining URL such as stratum+tcp://pool:3333.</small></label>
+          <label class="full public-pool-field"><span>Bitcoin address <small>Optional</small></span><input name="bitcoin_address" maxlength="160" placeholder="Auto-detect from miner pool usernames"><small>Used only to show your workers on the self-hosted Public Pool API. Leave blank for automatic detection.</small></label>
+          <label class="full local-log-field"><span>Mounted local pool log path</span><input name="log_path" maxlength="1024" placeholder="/var/log/public-pool/pool.log"><small>PoCiSys tails only new lines from this mounted file and keeps at most 50 matching events in memory.</small></label>
           <input name="type" type="hidden" value="public_pool">
         </div>
         <div id="pool-detect-result" class="test-result"></div>

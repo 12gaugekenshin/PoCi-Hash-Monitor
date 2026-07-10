@@ -101,15 +101,15 @@ def clean_pool(data):
     name = str(data.get("name") or "").strip()
     mode = str(data.get("mode") or "public_pool_api")
     if not name or len(name) > 80:
-        raise ApiError(400, "Pool monitor name is required")
+        raise ApiError(400, "Local pool monitor name is required")
     if mode not in {"public_pool_api", "local_log"}:
-        raise ApiError(400, "Unsupported pool monitor type")
+        raise ApiError(400, "Unsupported local pool monitor type")
     api_url = str(data.get("api_url") or "").strip().rstrip("/")
     log_path = str(data.get("log_path") or "").strip()
     if mode == "public_pool_api":
         parsed = urllib.parse.urlparse(api_url)
         if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username or parsed.password:
-            raise ApiError(400, "Enter a valid Public Pool API URL")
+            raise ApiError(400, "Enter a valid self-hosted Public Pool API URL")
     elif not log_path:
         raise ApiError(400, "Add a local pool log path")
     return {
@@ -240,7 +240,7 @@ async def discover_public_pool(host=None):
                 }
             except (asyncio.TimeoutError, OSError, ValueError):
                 continue
-    return {"ok": False, "error": "Public Pool API not found", "attempted": attempts}
+    return {"ok": False, "error": "Local Public Pool API not found", "attempted": attempts}
 
 
 async def api_dispatch(method, path, data):
@@ -248,7 +248,7 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.4.20"}
+        return {"ok": True, "version": "1.4.21"}
     if method == "GET" and path == "/api/status":
         try:
             pool_statuses = pool_logs.status()
@@ -518,7 +518,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.4.20"
+    server_version = "PoCiSys/1.4.21"
     protocol_version = "HTTP/1.1"
 
     def log_message(self, _format, *_args):
@@ -642,7 +642,7 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.4.20 starting", flush=True)
+    print("PoCiSys Hash Monitor 1.4.21 starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()

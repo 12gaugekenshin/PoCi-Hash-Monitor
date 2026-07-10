@@ -2,7 +2,7 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.4.20"
+version: "1.4.21"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/main/pocisys-hash-monitor/icon.svg
 description: >-
@@ -11,7 +11,7 @@ description: >-
 
 
   View live hashrate, temperatures, cooling, share quality, compact best
-  difficulty, chip and hashboard health, Public Pool workers, and automatic
+  difficulty, chip and hashboard health, self-hosted Public Pool workers, and automatic
   BTC/BCH network data. Configure dashboard-wide Discord alerts for miner
   outages, recoveries, low hashrate, temperature, pool switches, bad shares,
   best difficulty, and block events.
@@ -31,8 +31,9 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Adds beta read-only support for Canaan/Avalon and generic cgminer-compatible
-  miners using informational TCP API calls only.
+  Clarifies Local Pool monitoring for self-hosted pools, keeps Discord pool
+  alerts critical-only by default, and detects security-looking local pool log
+  events.
 dependencies: []
 path: ""
 defaultUsername: ""

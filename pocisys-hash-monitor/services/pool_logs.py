@@ -13,6 +13,7 @@ from pathlib import Path
 RULES = [
     (re.compile(r"\b(candidate|submitblock|block found)\b", re.I), "block", "🎯 Possible Block Event", "critical", True),
     (re.compile(r"\b(rpc.*(?:error|failed|timeout)|node.*error)\b", re.I), "rpc", "Pool RPC / Node Error", "critical", True),
+    (re.compile(r"\b(unauthori[sz]ed|forbidden|auth(?:entication)?\s+(?:failed|failure|error)|invalid\s+(?:user|password|login)|banned|blacklist|malformed|flood|ddos|attack|suspicious)\b", re.I), "security", "Local Pool Security Warning", "critical", True),
     (re.compile(r"\b(disconnected|reconnect|timeout|failed)\b", re.I), "connection", "Pool Connection Event", "warning", True),
     (re.compile(r"\b(rejected|stale|duplicate)\b", re.I), "bad-share", "Rejected / Stale Share", "warning", True),
     (re.compile(r"\b(error|warning)\b", re.I), "warning", "Pool Warning", "warning", True),

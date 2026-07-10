@@ -233,7 +233,8 @@ class AlertEngine:
 
     async def pool_event(self, event: dict):
         discord = self.config.get("discord", {})
-        should_send = event.get("important") or (
+        critical_pool_event = event.get("category") in {"block", "rpc", "security"} or event.get("severity") == "critical"
+        should_send = critical_pool_event or (
             event.get("category") == "activity" and discord.get("verbose_pool_events", False)
         )
         if should_send and discord.get("send_pool_alerts", True):
