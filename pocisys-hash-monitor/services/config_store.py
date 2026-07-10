@@ -19,6 +19,7 @@ def normalize_config(value: dict):
     config.setdefault("discord", {})
     config.setdefault("odds", {})
     config["app"].setdefault("dashboard_density", "comfortable")
+    config["app"].setdefault("difficulty_rain_enabled", True)
     config["app"].setdefault("dashboard_base_url", "")
     config["app"].setdefault("lan_access_enabled", False)
     config["app"].setdefault("offline_alert_grace_seconds", 60)

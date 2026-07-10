@@ -84,6 +84,7 @@
 
     <section id="page-screen" class="page screen-page">
       <div class="screen-shell">
+        <canvas id="difficulty-rain" class="difficulty-rain" aria-hidden="true"></canvas>
         <div class="screen-ambient screen-ambient-a"></div>
         <div class="screen-ambient screen-ambient-b"></div>
         <header class="screen-head">
@@ -129,6 +130,7 @@
             <label><span>Offline alert grace</span><div class="input-unit"><input name="offline_alert_grace_seconds" type="number" min="0" max="3600" required><em>seconds</em></div><small>Wait this long before sending miner offline alerts. Prevents Qaxe/LAN flap spam.</small></label>
             <label><span>Dashboard port</span><input name="dashboard_port" type="number" min="1024" max="65535" required><small>Changing the port requires a restart.</small></label>
             <label><span>Miner card layout</span><select name="dashboard_density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label>
+            <label class="switch-row full"><span><strong>Difficulty Rain</strong><small>Screen-page Matrix backdrop driven by live best-share difficulty. Uses no saved history.</small></span><input name="difficulty_rain_enabled" type="checkbox" role="switch"></label>
             <label class="switch-row full"><span><strong>LAN dashboard access</strong><small>Listen on your network so dashboard links can open from another device. Requires restart and firewall access.</small></span><input name="lan_access_enabled" type="checkbox" role="switch"></label>
           </div>
         </section>

@@ -6,6 +6,7 @@
     "offline_alert_grace_seconds": 60,
     "request_timeout_seconds": 4,
     "dashboard_density": "comfortable",
+    "difficulty_rain_enabled": true,
     "dashboard_base_url": "",
     "lan_access_enabled": false
   },

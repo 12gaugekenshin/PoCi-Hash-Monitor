@@ -189,6 +189,7 @@ def current_settings():
         "offline_alert_grace_seconds": app_config.get("offline_alert_grace_seconds", 60),
         "request_timeout_seconds": app_config.get("request_timeout_seconds", 4),
         "dashboard_density": app_config.get("dashboard_density", "comfortable"),
+        "difficulty_rain_enabled": app_config.get("difficulty_rain_enabled", True),
         "dashboard_base_url": app_config.get("dashboard_base_url", ""),
         "lan_access_enabled": app_config.get("lan_access_enabled", False),
         "discord_enabled": discord.get("enabled", False),
@@ -247,7 +248,7 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.4.13"}
+        return {"ok": True, "version": "1.4.14"}
     if method == "GET" and path == "/api/status":
         try:
             pool_statuses = pool_logs.status()
@@ -261,7 +262,10 @@ async def api_dispatch(method, path, data):
             "discord": alerts.status(),
             "pools": pool_statuses,
             "pool_event_count": len(pool_logs.events),
-            "ui": {"dashboard_density": config.get("app", {}).get("dashboard_density", "comfortable")},
+            "ui": {
+                "dashboard_density": config.get("app", {}).get("dashboard_density", "comfortable"),
+                "difficulty_rain_enabled": config.get("app", {}).get("difficulty_rain_enabled", True),
+            },
         }
     if method == "GET" and path == "/api/miners":
         current = {item.get("id"): item for item in statuses}
@@ -434,6 +438,7 @@ async def api_dispatch(method, path, data):
                 offline_alert_grace_seconds=max(0, min(3600, as_int(data.get("offline_alert_grace_seconds"), 60))),
                 request_timeout_seconds=max(0.5, min(30, as_float(data.get("request_timeout_seconds"), 4))),
                 dashboard_density=density,
+                difficulty_rain_enabled=bool(data.get("difficulty_rain_enabled", True)),
                 dashboard_base_url=dashboard_url,
                 lan_access_enabled=bool(data.get("lan_access_enabled", False)),
             )
@@ -511,7 +516,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.4.13"
+    server_version = "PoCiSys/1.4.14"
     protocol_version = "HTTP/1.1"
 
     def log_message(self, _format, *_args):
@@ -635,7 +640,7 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.4.13 starting", flush=True)
+    print("PoCiSys Hash Monitor 1.4.14 starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()

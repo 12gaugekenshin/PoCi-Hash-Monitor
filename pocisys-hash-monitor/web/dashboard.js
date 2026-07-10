@@ -11,6 +11,19 @@ let settings = null;
 let activeGroup = "All";
 let pointerStart = null;
 let suppressNextClick = false;
+const difficultyRain = {
+  canvas: null,
+  ctx: null,
+  width: 0,
+  height: 0,
+  dpr: 1,
+  columns: [],
+  raf: null,
+  lastFrame: 0,
+  values: [1000, 10000, 1000000],
+  activeReach: 0.32,
+  blockDifficulty: 1e14,
+};
 
 const DEFAULT_SETTINGS = {
   poll_interval_seconds: 10,
@@ -19,6 +32,7 @@ const DEFAULT_SETTINGS = {
   offline_alert_grace_seconds: 60,
   dashboard_port: 8765,
   dashboard_density: "comfortable",
+  difficulty_rain_enabled: true,
   dashboard_base_url: "",
   lan_access_enabled: false,
   discord_enabled: false,
@@ -64,6 +78,141 @@ function difficulty(value) {
   const units = [["P", 1e15], ["T", 1e12], ["G", 1e9], ["M", 1e6], ["K", 1e3]];
   const unit = units.find(([, threshold]) => parsed >= threshold);
   return unit ? `${number(parsed / unit[1], 2)}${unit[0]}` : number(parsed, 0);
+}
+
+function difficultyNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "number") return Number.isFinite(value) && value > 0 ? value : null;
+  const text = String(value).trim().replaceAll(",", "");
+  const match = text.match(/^([0-9]*\.?[0-9]+)\s*([KMGTPE])?$/i);
+  if (!match) return null;
+  const multipliers = {K: 1e3, M: 1e6, G: 1e9, T: 1e12, P: 1e15, E: 1e18};
+  const parsed = Number(match[1]) * (multipliers[(match[2] || "").toUpperCase()] || 1);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function collectDifficultyRainValues() {
+  const values = [];
+  for (const miner of state?.miners || []) {
+    const diff = miner.difficulty || {};
+    for (const item of [diff.best_session, diff.best_all_time]) {
+      const parsed = difficultyNumber(item);
+      if (parsed) values.push(parsed);
+    }
+  }
+  for (const pool of state?.pools || []) {
+    for (const worker of pool.workers || []) {
+      const parsed = difficultyNumber(worker.best_difficulty);
+      if (parsed) values.push(parsed);
+    }
+  }
+  const blockDifficulty = difficultyNumber(state?.odds?.btc?.difficulty) || difficultyNumber(state?.odds?.bch?.difficulty) || 1e14;
+  const best = Math.max(1000, ...values);
+  const minLog = 3;
+  const maxLog = Math.max(9, Math.log10(blockDifficulty));
+  const progress = Math.max(0, Math.min(1, (Math.log10(best) - minLog) / (maxLog - minLog || 1)));
+  difficultyRain.values = values.length ? values.slice(-24) : [1000, 10000, 1000000];
+  difficultyRain.blockDifficulty = blockDifficulty;
+  difficultyRain.activeReach = Math.max(0.28, Math.min(0.97, 0.26 + progress * 0.71));
+}
+
+function rainValueForX(xRatio) {
+  const minLog = 3;
+  const maxLog = Math.max(9, Math.log10(difficultyRain.blockDifficulty || 1e14));
+  const blended = Math.max(0, Math.min(1, xRatio + (Math.random() - 0.5) * 0.18));
+  const nearby = difficultyRain.values[Math.floor(Math.random() * difficultyRain.values.length)] || 1000;
+  const nearbyLog = Math.log10(Math.max(1000, nearby));
+  const targetLog = minLog + Math.pow(blended, 1.35) * (maxLog - minLog);
+  const logValue = targetLog * 0.72 + nearbyLog * 0.28 + (Math.random() - 0.5) * 0.9;
+  return Math.max(1000, Math.pow(10, logValue));
+}
+
+function rainText(value) {
+  const rounded = Math.max(1, Math.round(value));
+  if (rounded >= 1e12) return String(rounded);
+  if (rounded >= 1e9 && Math.random() < 0.35) return `${Math.round(rounded / 1e6)}M`;
+  return String(rounded);
+}
+
+function resetRainColumn(column, startAbove = false) {
+  const activeWidth = difficultyRain.width * difficultyRain.activeReach;
+  const roll = Math.random();
+  const baseX = roll > 0.94
+    ? activeWidth + Math.random() * (difficultyRain.width - activeWidth) * 0.65
+    : Math.pow(Math.random(), 1.55) * activeWidth;
+  const xRatio = Math.max(0, Math.min(1, baseX / Math.max(1, difficultyRain.width)));
+  const value = rainValueForX(xRatio);
+  column.x = baseX;
+  column.y = startAbove ? -Math.random() * difficultyRain.height : Math.random() * difficultyRain.height;
+  column.speed = 14 + Math.random() * 34 + xRatio * 20;
+  column.size = 10 + Math.random() * 7;
+  column.trail = 4 + Math.floor(Math.random() * 8);
+  column.text = rainText(value);
+  column.alpha = 0.06 + xRatio * 0.16 + Math.random() * 0.06;
+}
+
+function resizeDifficultyRain() {
+  const canvas = difficultyRain.canvas || $("#difficulty-rain");
+  if (!canvas) return false;
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const width = Math.max(1, Math.floor(rect.width));
+  const height = Math.max(1, Math.floor(rect.height));
+  difficultyRain.canvas = canvas;
+  difficultyRain.ctx = canvas.getContext("2d", {alpha: true});
+  if (difficultyRain.width !== width || difficultyRain.height !== height || difficultyRain.dpr !== dpr) {
+    difficultyRain.width = width;
+    difficultyRain.height = height;
+    difficultyRain.dpr = dpr;
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+    difficultyRain.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const count = Math.max(24, Math.min(96, Math.floor(width / 18)));
+    difficultyRain.columns = Array.from({length: count}, () => ({}));
+    difficultyRain.columns.forEach(column => resetRainColumn(column, false));
+  }
+  return true;
+}
+
+function drawDifficultyRain(timestamp = 0) {
+  difficultyRain.raf = null;
+  const enabled = Boolean(state?.ui?.difficulty_rain_enabled ?? settings?.difficulty_rain_enabled ?? true);
+  const active = document.body.classList.contains("screen-active") && enabled && document.visibilityState !== "hidden";
+  const canvas = difficultyRain.canvas || $("#difficulty-rain");
+  if (!canvas) return;
+  canvas.classList.toggle("off", !enabled);
+  if (!active || !resizeDifficultyRain()) {
+    if (difficultyRain.ctx) difficultyRain.ctx.clearRect(0, 0, difficultyRain.width, difficultyRain.height);
+    return;
+  }
+  if (timestamp - difficultyRain.lastFrame < 72) {
+    difficultyRain.raf = requestAnimationFrame(drawDifficultyRain);
+    return;
+  }
+  const dt = Math.min(0.12, Math.max(0.016, (timestamp - difficultyRain.lastFrame) / 1000 || 0.072));
+  difficultyRain.lastFrame = timestamp;
+  const ctx = difficultyRain.ctx;
+  ctx.clearRect(0, 0, difficultyRain.width, difficultyRain.height);
+  ctx.font = "600 12px 'Cascadia Code', Consolas, monospace";
+  ctx.textBaseline = "top";
+  for (const column of difficultyRain.columns) {
+    column.y += column.speed * dt;
+    if (column.y > difficultyRain.height + column.trail * column.size * 1.7 || Math.random() < 0.002) resetRainColumn(column, true);
+    for (let i = 0; i < column.trail; i++) {
+      const y = column.y - i * column.size * 1.55;
+      if (y < -24 || y > difficultyRain.height + 24) continue;
+      const fade = Math.max(0, 1 - i / column.trail);
+      const pulse = 0.78 + Math.sin((timestamp / 900) + column.x * 0.01) * 0.22;
+      ctx.fillStyle = `rgba(78, 215, 200, ${Math.max(0, column.alpha * fade * pulse)})`;
+      ctx.fillText(column.text, column.x, y);
+    }
+  }
+  difficultyRain.raf = requestAnimationFrame(drawDifficultyRain);
+}
+
+function updateDifficultyRain() {
+  collectDifficultyRainValues();
+  if (!difficultyRain.raf) difficultyRain.raf = requestAnimationFrame(drawDifficultyRain);
 }
 
 function percent(chance) {
@@ -175,6 +324,7 @@ function route() {
   const known = {"/":"dashboard", "/miners":"miners", "/pools":"pools", "/odds":"odds", "/alerts":"alerts", "/screen":"screen", "/settings":"settings"};
   const page = detailMatch ? "miner-detail" : (known[path] || "dashboard");
   document.body.classList.toggle("screen-active", page === "screen");
+  updateDifficultyRain();
   $$(".page").forEach(element => element.classList.toggle("active", element.id === `page-${page}`));
   $$("nav a").forEach(element => {
     const target = element.getAttribute("href");
@@ -463,6 +613,7 @@ function renderScreen() {
   $("#screen-pools").innerHTML = pools.length ? pools.map(pool => `<div class="screen-row"><i class="status-dot" style="background:${pool.available ? "var(--green)" : "var(--red)"}"></i><div><strong>${escapeHtml(pool.name)}</strong><span>${escapeHtml(pool.message || "Pool monitor")}</span></div><b>${pool.available && pool.total_hashrate_ths != null ? `${number(pool.total_hashrate_ths, 2)} TH/s` : pool.enabled ? "Enabled" : "Off"}</b></div>`).join("") : `<div class="screen-empty"><strong>No pool monitors</strong><span>Pool cards appear here when configured.</span></div>`;
   const alerts = state.discord?.recent || [];
   $("#screen-alerts").innerHTML = alerts.length ? alerts.slice(0, 5).map(event => `<div class="screen-row alert"><span>${appTime(event.time, {hour: "numeric", minute: "2-digit"})}</span><div><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${escapeHtml(event.source)}  -  ${escapeHtml(event.message)}</span></div></div>`).join("") : `<div class="screen-empty"><strong>No recent alerts</strong><span>Quiet fleet. The cat approves.</span></div>`;
+  updateDifficultyRain();
 }
 
 async function loadPoolEvents() {
@@ -769,6 +920,7 @@ $("#settings-form").addEventListener("submit", async event => {
     offline_alert_grace_seconds: Number(form.elements.offline_alert_grace_seconds.value),
     request_timeout_seconds: Number(form.elements.request_timeout_seconds.value),
     dashboard_density: form.elements.dashboard_density.value,
+    difficulty_rain_enabled: form.elements.difficulty_rain_enabled.checked,
     dashboard_base_url: form.elements.dashboard_base_url.value || null,
     lan_access_enabled: form.elements.lan_access_enabled.checked,
     discord_enabled: form.elements.discord_enabled.checked,
@@ -833,6 +985,11 @@ document.addEventListener("pointerup", () => {
 }, true);
 
 window.addEventListener("popstate", route);
+window.addEventListener("resize", () => {
+  difficultyRain.width = 0;
+  updateDifficultyRain();
+});
+document.addEventListener("visibilitychange", updateDifficultyRain);
 route();
 Promise.all([refresh(), loadManagement(), loadSettings()]).catch(error => toast(error.message, "error"));
 setInterval(refresh, 5000);

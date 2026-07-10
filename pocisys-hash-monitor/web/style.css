@@ -498,6 +498,21 @@ body.screen-active .cat-watermark img { opacity: .22; }
   box-shadow: inset 0 0 80px rgba(0,0,0,.25), 0 28px 90px rgba(0,0,0,.28);
   animation: screenBreathe 18s ease-in-out infinite alternate;
 }
+.difficulty-rain {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: .46;
+  mix-blend-mode: screen;
+  filter: blur(.08px);
+  mask-image:
+    linear-gradient(90deg, rgba(0,0,0,.72), #000 18%, #000 88%, rgba(0,0,0,.5)),
+    linear-gradient(180deg, transparent, #000 11%, #000 88%, transparent);
+}
+.difficulty-rain.off { opacity: 0; }
 .screen-shell::after {
   content: "";
   position: absolute;
@@ -521,7 +536,7 @@ body.screen-active .cat-watermark img { opacity: .22; }
 }
 .screen-ambient-a { right: -12rem; top: -14rem; background: var(--cyan); }
 .screen-ambient-b { left: -16rem; bottom: -17rem; background: var(--blue); animation-duration: 95s; }
-.screen-head, .screen-status-grid, .screen-main-grid { position: relative; z-index: 1; }
+.screen-head, .screen-status-grid, .screen-main-grid { position: relative; z-index: 2; }
 .screen-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
 .screen-head h1 { font-size: clamp(32px, 4vw, 62px); color: #dce7f4; opacity: .94; }
 .screen-head p { color: #718096; }
