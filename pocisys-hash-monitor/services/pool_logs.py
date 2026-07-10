@@ -225,7 +225,7 @@ class PoolLogService:
                 for pattern, category, title, severity, important in RULES:
                     if pattern.search(clean):
                         event = {
-                            "time": datetime.now().isoformat(timespec="seconds"),
+                            "time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                             "pool": pool.get("name", "Pool"),
                             "category": category,
                             "title": title,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .discord import DiscordWebhook
 
@@ -23,7 +23,7 @@ def _difficulty_number(value):
 def format_difficulty(value):
     parsed = _difficulty_number(value)
     if parsed is None:
-        return "—"
+        return "â€”"
     for suffix, threshold in (("P", 1e15), ("T", 1e12), ("G", 1e9), ("M", 1e6), ("K", 1e3)):
         if parsed >= threshold:
             compact = f"{parsed / threshold:.2f}".rstrip("0").rstrip(".")
@@ -57,7 +57,7 @@ class AlertEngine:
 
     def _record(self, title, message, severity, source):
         event = {
-            "time": datetime.now().isoformat(timespec="seconds"),
+            "time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "title": title,
             "message": message,
             "severity": severity,
@@ -116,16 +116,6 @@ class AlertEngine:
                 "success", name, True, miner_url,
             )
 
-        if False and not online and discord.get("send_offline_alerts", True):
-            await self.emit(
-                f"{miner_key}:offline", "🚨 Miner Offline", f"{ip_line}\nAPI: failed",
-                "critical", name, url=miner_url,
-            )
-        elif False and prior is not None and not prior.get("online") and discord.get("send_recovery_alerts", True):
-            await self.emit(
-                f"{miner_key}:recovered", "✅ Miner Recovered", f"{ip_line}\nAPI: healthy",
-                "success", name, True, miner_url,
-            )
 
         if online:
             hashrate = status.get("hashrate_ths")
@@ -141,7 +131,7 @@ class AlertEngine:
                 if discord.get("send_hashrate_alerts", True):
                     await self.emit(
                         f"{miner_key}:hashrate",
-                        "⚠️ Hashrate Low",
+                        "âš ï¸ Hashrate Low",
                         (
                             f"{name}\nCurrent: {hashrate:.3g} TH/s\n"
                             f"Minimum: {threshold:.3g} TH/s\nRule: {threshold_source}"
@@ -157,15 +147,15 @@ class AlertEngine:
                 status["warnings"].append("Temperature critical")
                 if discord.get("send_temperature_alerts", True):
                     await self.emit(
-                        f"{miner_key}:temp-critical", "🔥 Temperature Critical",
-                        f"{name}\nCurrent: {highest:g}°C", "critical", name, url=miner_url,
+                        f"{miner_key}:temp-critical", "ðŸ”¥ Temperature Critical",
+                        f"{name}\nCurrent: {highest:g}Â°C", "critical", name, url=miner_url,
                     )
             elif highest is not None and warning and highest >= warning:
                 status["warnings"].append("Temperature warning")
                 if discord.get("send_temperature_alerts", True):
                     await self.emit(
-                        f"{miner_key}:temp-warning", "🌡️ Temperature Warning",
-                        f"{name}\nCurrent: {highest:g}°C", "warning", name, url=miner_url,
+                        f"{miner_key}:temp-warning", "ðŸŒ¡ï¸ Temperature Warning",
+                        f"{name}\nCurrent: {highest:g}Â°C", "warning", name, url=miner_url,
                     )
 
             pool = status.get("pool", {})
@@ -174,7 +164,7 @@ class AlertEngine:
                 status["warnings"].append("Pool disconnected")
                 if discord.get("send_pool_alerts", True):
                     await self.emit(
-                        f"{miner_key}:pool", "🚨 Pool Disconnected",
+                        f"{miner_key}:pool", "ðŸš¨ Pool Disconnected",
                         f"{name}\nPool: {pool.get('url') or 'unknown'}",
                         "critical", name, url=miner_url,
                     )
@@ -188,7 +178,7 @@ class AlertEngine:
                 old_pool = prior["pool_identity"][0]
                 await self.emit(
                     f"{miner_key}:pool-switch",
-                    "🔀 Miner Pool Switched",
+                    "ðŸ”€ Miner Pool Switched",
                     f"{name}\nFrom: {old_pool}\nTo: {pool_identity[0]}",
                     "warning", name, True, miner_url,
                 )
@@ -202,7 +192,7 @@ class AlertEngine:
                 )
                 if increase and discord.get("send_share_alerts", True):
                     await self.emit(
-                        f"{miner_key}:shares", "⚠️ Bad Shares Increased",
+                        f"{miner_key}:shares", "âš ï¸ Bad Shares Increased",
                         f"{name}\nNew invalid/stale/rejected: {increase}",
                         "warning", name, url=miner_url,
                     )
@@ -212,7 +202,7 @@ class AlertEngine:
             if blocks_found > previous_blocks and discord.get("send_block_found_alerts", True):
                 await self.emit(
                     f"{miner_key}:block-found",
-                    "🎯 Block Found",
+                    "ðŸŽ¯ Block Found",
                     f"{name}\nMiner block count: {blocks_found}\nCheck the miner and pool immediately.",
                     "critical", name, True, miner_url,
                 )
@@ -223,7 +213,7 @@ class AlertEngine:
             if parsed_best is not None:
                 if old_best is not None and parsed_best > old_best and discord.get("send_best_diff_alerts", True):
                     await self.emit(
-                        f"{miner_key}:best", "🏆 New Best Difficulty",
+                        f"{miner_key}:best", "ðŸ† New Best Difficulty",
                         f"{name}\nBest difficulty: {format_difficulty(best)}",
                         "info", name, True, miner_url,
                     )
@@ -259,7 +249,7 @@ class AlertEngine:
 
     async def test_discord(self):
         result = await self.discord.send(
-            "🧪 Test Alert",
+            "ðŸ§ª Test Alert",
             "PoCiSys Hash Monitor webhook is working.",
             "success",
             url=self.dashboard_link(),

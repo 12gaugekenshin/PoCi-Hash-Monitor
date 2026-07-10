@@ -19,6 +19,7 @@
       <a href="/pools" data-link>Pools</a>
       <a href="/odds" data-link>Block Odds</a>
       <a href="/alerts" data-link>Alerts</a>
+      <a href="/screen" data-link>Screen</a>
       <a href="/settings" data-link>Settings</a>
     </nav>
     <div class="top-actions">
@@ -78,6 +79,41 @@
       </div>
       <div id="discord-status"></div>
       <section class="panel feed-panel"><div class="panel-title"><h2>Recent alert activity</h2><span class="pill">25 max</span></div><div id="alert-events" class="feed"></div></section>
+    </section>
+
+    <section id="page-screen" class="page screen-page">
+      <div class="screen-shell">
+        <div class="screen-ambient screen-ambient-a"></div>
+        <div class="screen-ambient screen-ambient-b"></div>
+        <header class="screen-head">
+          <div>
+            <p class="eyebrow">Low-burn wall display</p>
+            <h1>PoCiSys watch screen</h1>
+            <p>Live fleet status, dimmed for long-running monitor use.</p>
+          </div>
+          <div class="screen-clock">
+            <strong id="screen-time">--:--</strong>
+            <span id="screen-updated">Waiting for poll</span>
+          </div>
+        </header>
+        <div id="screen-status" class="screen-status-grid"></div>
+        <div class="screen-main-grid">
+          <section class="screen-panel screen-fleet-panel">
+            <div class="screen-panel-title"><h2>Fleet</h2><span id="screen-fleet-count" class="pill">0 miners</span></div>
+            <div id="screen-miners" class="screen-miners"></div>
+          </section>
+          <aside class="screen-side">
+            <section class="screen-panel">
+              <div class="screen-panel-title"><h2>Pools</h2><span class="pill">Live</span></div>
+              <div id="screen-pools" class="screen-list"></div>
+            </section>
+            <section class="screen-panel">
+              <div class="screen-panel-title"><h2>Recent alerts</h2><span class="pill">Current session</span></div>
+              <div id="screen-alerts" class="screen-list"></div>
+            </section>
+          </aside>
+        </div>
+      </div>
     </section>
 
     <section id="page-settings" class="page">

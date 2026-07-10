@@ -91,6 +91,17 @@ function uptime(seconds) {
   return [days ? `${days}d` : "", hours ? `${hours}h` : "", `${minutes}m`].filter(Boolean).join(" ");
 }
 
+function appDate(value) {
+  if (!value) return null;
+  const text = String(value);
+  return new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(text) ? text : `${text}Z`);
+}
+
+function appTime(value, options = {}) {
+  const date = appDate(value);
+  return date ? date.toLocaleTimeString([], options) : "â€”";
+}
+
 function highestTemp(miner) {
   const values = Object.values(miner?.temps || {}).filter(value => value !== null);
   return values.length ? Math.max(...values) : null;
@@ -161,8 +172,9 @@ function navigate(path) {
 function route() {
   const path = location.pathname.replace(/\/+$/, "") || "/";
   const detailMatch = path.match(/^\/miners\/([^/]+)$/);
-  const known = {"/":"dashboard", "/miners":"miners", "/pools":"pools", "/odds":"odds", "/alerts":"alerts", "/settings":"settings"};
+  const known = {"/":"dashboard", "/miners":"miners", "/pools":"pools", "/odds":"odds", "/alerts":"alerts", "/screen":"screen", "/settings":"settings"};
   const page = detailMatch ? "miner-detail" : (known[path] || "dashboard");
+  document.body.classList.toggle("screen-active", page === "screen");
   $$(".page").forEach(element => element.classList.toggle("active", element.id === `page-${page}`));
   $$("nav a").forEach(element => {
     const target = element.getAttribute("href");
@@ -192,7 +204,7 @@ function renderSummary() {
     summaryMetric("BTC daily odds", state.odds.btc.available ? percent(state.odds.btc.daily_chance) : "—", state.odds.btc.network_source || "Needs setup"),
     summaryMetric("BCH daily odds", state.odds.bch.available ? percent(state.odds.bch.daily_chance) : "—", state.odds.bch.network_source || "Needs setup"),
   ].join("");
-  $("#last-poll").textContent = summary.last_poll ? `Updated ${new Date(summary.last_poll).toLocaleTimeString()}` : "Waiting for first poll…";
+  $("#last-poll").textContent = summary.last_poll ? `Updated ${appTime(summary.last_poll)}` : "Waiting for first poll…";
 }
 
 function minerCard(miner) {
@@ -392,7 +404,7 @@ function renderManagedPools() {
 
 function alertFeed(events) {
   if (!events?.length) return `<div class="empty">No alert activity yet.</div>`;
-  return events.map(event => `<div class="feed-item"><span class="feed-time">${new Date(event.time).toLocaleTimeString()}</span><span class="feed-source">${escapeHtml(event.source)}</span><div class="feed-message"><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${escapeHtml(event.message)}</span></div></div>`).join("");
+  return events.map(event => `<div class="feed-item"><span class="feed-time">${appTime(event.time)}</span><span class="feed-source">${escapeHtml(event.source)}</span><div class="feed-message"><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${escapeHtml(event.message)}</span></div></div>`).join("");
 }
 
 function renderAlerts() {
@@ -402,11 +414,62 @@ function renderAlerts() {
   $("#alert-events").innerHTML = alertFeed(discord.recent);
 }
 
+function screenStatusCard(label, value, sub = "", className = "") {
+  return `<article class="screen-stat"><span>${label}</span><strong class="${className}">${value}</strong><small>${sub}</small></article>`;
+}
+
+function screenMiner(miner) {
+  const [hash, unit] = compactHashrate(miner.hashrate_ths);
+  const temp = highestTemp(miner);
+  const badShares = ["invalid", "stale", "rejected"].reduce((sum, key) => sum + (miner.shares?.[key] || 0), 0);
+  const healthy = miner.online && miner.api_ok;
+  const poolOk = miner.pool?.connected === true || String(miner.pool?.status || "").toLowerCase() === "alive";
+  const statusText = healthy ? "Online" : miner.offline_for_seconds ? `Offline ${number(miner.offline_for_seconds, 0)}s` : miner.status || "Offline";
+  return `<article class="screen-miner ${healthy ? "online" : "offline"}">
+    <div class="screen-miner-top"><i class="status-dot"></i><div><strong>${escapeHtml(miner.name)}</strong><span>${escapeHtml(miner.ip)} Â· ${escapeHtml(miner.type)}</span></div><em>${escapeHtml(statusText)}</em></div>
+    <div class="screen-hash"><strong>${hash}</strong><span>${unit}</span></div>
+    <div class="screen-mini-grid">
+      <span><small>Temp</small><b>${temp === null ? "â€”" : number(temp) + "Â°C"}</b></span>
+      <span><small>API</small><b>${miner.ping_ms === null ? "Fail" : number(miner.ping_ms, 0) + " ms"}</b></span>
+      <span><small>Pool</small><b class="${poolOk ? "good" : "warn"}">${escapeHtml(miner.pool?.status || "unknown")}</b></span>
+      <span><small>Bad</small><b class="${badShares ? "warn" : ""}">${number(badShares, 0)}</b></span>
+      <span><small>Best</small><b>${escapeHtml(difficulty(miner.difficulty?.best_all_time || miner.difficulty?.best_session))}</b></span>
+      <span><small>Fans</small><b title="${escapeHtml(fanSummary(miner))}">${escapeHtml(fanSummary(miner))}</b></span>
+    </div>
+    ${(miner.warnings || []).length ? `<div class="screen-warning">${escapeHtml(miner.warnings[0])}</div>` : ""}
+  </article>`;
+}
+
+function renderScreen() {
+  if (!state || !$("#screen-status")) return;
+  const summary = state.summary || {};
+  const miners = state.miners || [];
+  const onlineClass = !summary.total_miners ? "" : summary.online_miners === summary.total_miners ? "good" : summary.online_miners ? "warn" : "bad";
+  const hottest = summary.highest_temperature_c === null || summary.highest_temperature_c === undefined ? "â€”" : `${number(summary.highest_temperature_c)}Â°C`;
+  const lastPoll = appDate(summary.last_poll);
+  $("#screen-time").textContent = new Date().toLocaleTimeString([], {hour: "numeric", minute: "2-digit"});
+  $("#screen-updated").textContent = lastPoll ? `Updated ${lastPoll.toLocaleTimeString()}` : "Waiting for first poll";
+  $("#screen-status").innerHTML = [
+    screenStatusCard("Hashrate", `${number(summary.total_hashrate_ths || 0, 2)} TH/s`, "Fleet total", "good"),
+    screenStatusCard("Online", `${summary.online_miners || 0} / ${summary.total_miners || 0}`, `${summary.configured_miners || 0} configured`, onlineClass),
+    screenStatusCard("Peak temp", hottest, "Current sensors", summary.highest_temperature_c >= 70 ? "warn" : ""),
+    screenStatusCard("Bad shares", number(summary.total_bad_shares || 0, 0), "Invalid + stale + rejected", summary.total_bad_shares ? "warn" : ""),
+    screenStatusCard("BTC odds", state.odds?.btc?.available ? `${percent(state.odds.btc.daily_chance)} / day` : "â€”", state.odds?.btc?.network_source || "Network data"),
+    screenStatusCard("BCH odds", state.odds?.bch?.available ? `${percent(state.odds.bch.daily_chance)} / day` : "â€”", state.odds?.bch?.network_source || "Network data"),
+  ].join("");
+  $("#screen-fleet-count").textContent = `${miners.length} miner${miners.length === 1 ? "" : "s"}`;
+  $("#screen-miners").innerHTML = miners.length ? miners.map(screenMiner).join("") : `<div class="screen-empty"><strong>No miners configured</strong><span>Add miners from the normal dashboard to populate watch screen mode.</span></div>`;
+  const pools = state.pools || [];
+  $("#screen-pools").innerHTML = pools.length ? pools.map(pool => `<div class="screen-row"><i class="status-dot" style="background:${pool.available ? "var(--green)" : "var(--red)"}"></i><div><strong>${escapeHtml(pool.name)}</strong><span>${escapeHtml(pool.message || "Pool monitor")}</span></div><b>${pool.available && pool.total_hashrate_ths != null ? `${number(pool.total_hashrate_ths, 2)} TH/s` : pool.enabled ? "Enabled" : "Off"}</b></div>`).join("") : `<div class="screen-empty"><strong>No pool monitors</strong><span>Pool cards appear here when configured.</span></div>`;
+  const alerts = state.discord?.recent || [];
+  $("#screen-alerts").innerHTML = alerts.length ? alerts.slice(0, 5).map(event => `<div class="screen-row alert"><span>${appTime(event.time, {hour: "numeric", minute: "2-digit"})}</span><div><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${escapeHtml(event.source)} Â· ${escapeHtml(event.message)}</span></div></div>`).join("") : `<div class="screen-empty"><strong>No recent alerts</strong><span>Quiet fleet. The cat approves.</span></div>`;
+}
+
 async function loadPoolEvents() {
   try {
     const events = (await request("/api/pool-events")).events || [];
     $("#pool-event-total").textContent = `${events.length} event${events.length === 1 ? "" : "s"}`;
-    $("#pool-events").innerHTML = events.length ? events.map(event => `<div class="feed-item"><span class="feed-time">${new Date(event.time).toLocaleTimeString()}</span><span class="feed-source">${escapeHtml(event.pool)}</span><div class="feed-message"><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${escapeHtml(event.line)}</span></div></div>`).join("") : `<div class="empty">Waiting for new important pool events.</div>`;
+    $("#pool-events").innerHTML = events.length ? events.map(event => `<div class="feed-item"><span class="feed-time">${appTime(event.time)}</span><span class="feed-source">${escapeHtml(event.pool)}</span><div class="feed-message"><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${escapeHtml(event.line)}</span></div></div>`).join("") : `<div class="empty">Waiting for new important pool events.</div>`;
   } catch (_) {}
 }
 
@@ -419,6 +482,7 @@ function renderAll() {
   renderDashboardPools();
   renderManagedPools();
   renderAlerts();
+  renderScreen();
   const detailMatch = location.pathname.match(/^\/miners\/([^/]+)$/);
   if (detailMatch) renderMinerDetail(detailMatch[1]);
 }

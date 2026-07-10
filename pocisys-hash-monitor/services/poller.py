@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 
 from miners import get_driver
 from .ping import tcp_ping
@@ -59,7 +59,7 @@ class MinerPoller:
         # retain it in latest_status or expose it to the dashboard.
         status.pop("raw", None)
         status["id"] = miner.get("id")
-        status["checked_at"] = datetime.now().isoformat(timespec="seconds")
+        status["checked_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
         await self.alert_engine.evaluate_miner(status, miner)
         return miner, status
 
@@ -70,7 +70,7 @@ class MinerPoller:
             miner.get("id") or f"{miner.get('type', 'miner')}:{miner['ip']}": status
             for miner, status in results
         }
-        self.last_poll = datetime.now().isoformat(timespec="seconds")
+        self.last_poll = datetime.now(timezone.utc).isoformat(timespec="seconds")
         return self.statuses()
 
     def statuses(self):
