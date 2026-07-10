@@ -8,7 +8,7 @@ Add this Community App Store URL in Umbrel:
 https://github.com/12gaugekenshin/PoCi-Hash-Monitor
 ```
 
-Version 1.4.4 uses the public multi-architecture Python image. The container
+Version 1.4.5 uses the public multi-architecture Python image. The container
 downloads this repository's app source at startup and runs it from `/tmp`, so
 Umbrel only persists `/data/config.json`. It does not require GitHub Actions,
 pip installs, bind-mounted repo files, or a custom container package. Config
