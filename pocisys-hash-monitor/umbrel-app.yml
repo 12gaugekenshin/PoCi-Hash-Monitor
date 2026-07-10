@@ -2,7 +2,7 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.4.8"
+version: "1.4.10"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/main/pocisys-hash-monitor/icon.svg
 description: >-
@@ -31,8 +31,8 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Uses a pure-vector public icon URL for Umbrel home-screen compatibility and
-  restores the cat watermark inside the low-burn Screen page.
+  Keeps the Umbrel-facing ASCII cat icon and restores the original cat artwork
+  as a visible bottom-right overlay across the app pages.
 dependencies: []
 path: ""
 defaultUsername: ""

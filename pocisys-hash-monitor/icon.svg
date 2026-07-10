@@ -1,48 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="PoCiSys Hash Monitor">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="PoCiSys Hash Monitor ASCII cat icon">
   <defs>
-    <radialGradient id="bg" cx="72%" cy="15%" r="88%">
-      <stop offset="0" stop-color="#193944"/>
-      <stop offset="0.56" stop-color="#07101a"/>
+    <radialGradient id="bg" cx="72%" cy="16%" r="88%">
+      <stop offset="0" stop-color="#173944"/>
+      <stop offset="0.58" stop-color="#07101a"/>
       <stop offset="1" stop-color="#04070c"/>
     </radialGradient>
-    <linearGradient id="mint" x1="120" y1="86" x2="410" y2="440" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#75f1e2"/>
-      <stop offset="1" stop-color="#34bdb3"/>
+    <linearGradient id="scan" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4ed7c8" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#65a9ff" stop-opacity="0.08"/>
     </linearGradient>
-    <linearGradient id="fur" x1="130" y1="100" x2="380" y2="420" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#d8c8ad"/>
-      <stop offset="0.55" stop-color="#918a7c"/>
-      <stop offset="1" stop-color="#6c6b62"/>
-    </linearGradient>
-    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
-      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#00070b" flood-opacity="0.55"/>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#4ed7c8" flood-opacity="0.45"/>
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#00070b" flood-opacity="0.55"/>
     </filter>
   </defs>
+
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <circle cx="390" cy="95" r="100" fill="#4ed7c8" opacity="0.12"/>
-  <circle cx="98" cy="428" r="135" fill="#65a9ff" opacity="0.07"/>
-  <g filter="url(#shadow)">
-    <circle cx="256" cy="256" r="194" fill="#b4beb7" opacity="0.22" stroke="#e7dcc9" stroke-width="10"/>
-    <circle cx="256" cy="256" r="172" fill="#17222b" opacity="0.42" stroke="#4ed7c8" stroke-opacity="0.28" stroke-width="4"/>
-    <path d="M157 226c-7-72 15-119 55-58 28-16 62-16 90 0 40-61 62-14 55 58 34 66 5 163-101 163S123 292 157 226Z" fill="url(#fur)"/>
-    <path d="M179 174c-8-43 10-46 39-7-20 2-32 18-39 7Zm154-7c29-39 47-36 39 7-7 11-19-5-39-7Z" fill="#efe0c8" opacity="0.86"/>
-    <path d="M205 276c21 20 81 20 102 0-10 48-32 79-51 79s-41-31-51-79Z" fill="#f4ead9" opacity="0.78"/>
-    <ellipse cx="213" cy="238" rx="29" ry="20" fill="#93a879"/>
-    <ellipse cx="299" cy="238" rx="29" ry="20" fill="#93a879"/>
-    <circle cx="219" cy="238" r="10" fill="#07101a"/>
-    <circle cx="293" cy="238" r="10" fill="#07101a"/>
-    <path d="M244 280c6-9 18-9 24 0-3 8-21 8-24 0Z" fill="#c79f87" stroke="#07101a" stroke-width="5" stroke-linejoin="round"/>
-    <path d="M256 287v18m0 0c-15 18-34 5-41-5m41 5c15 18 34 5 41-5" fill="none" stroke="#07101a" stroke-width="6" stroke-linecap="round"/>
-    <path d="M132 273c49-12 87-12 115 2M132 303c50-8 88-8 115 0M380 273c-49-12-87-12-115 2M380 303c-50-8-88-8-115 0" stroke="#f1eadf" stroke-width="5" stroke-linecap="round" opacity="0.86"/>
-    <g transform="translate(294 286) rotate(10)">
-      <ellipse cx="38" cy="41" rx="34" ry="47" fill="#8b8373"/>
-      <circle cx="58" cy="8" r="16" fill="#8b8373"/>
-      <circle cx="69" cy="2" r="10" fill="#8b8373"/>
-      <path d="M64 42c8 1 14 6 17 12" stroke="#1b2023" stroke-width="5" stroke-linecap="round"/>
-      <path d="M18 82c-7 31-30 43-54 36" fill="none" stroke="#5e5a51" stroke-width="11" stroke-linecap="round"/>
-      <path d="M34 78v31M54 79v27" stroke="#5e5a51" stroke-width="10" stroke-linecap="round"/>
-    </g>
+  <path d="M78 104h356M78 176h356M78 248h356M78 320h356M78 392h356M104 78v356M176 78v356M248 78v356M320 78v356M392 78v356"
+        stroke="url(#scan)" stroke-width="2" opacity="0.35"/>
+  <circle cx="392" cy="100" r="94" fill="#4ed7c8" opacity="0.10"/>
+  <circle cx="114" cy="406" r="126" fill="#65a9ff" opacity="0.07"/>
+
+  <rect x="82" y="78" width="348" height="356" rx="44" fill="#07111c" stroke="#2b455c" stroke-width="4" opacity="0.92"/>
+  <rect x="82" y="78" width="348" height="56" rx="44" fill="#101b28"/>
+  <circle cx="124" cy="106" r="7" fill="#ff6b78"/>
+  <circle cx="149" cy="106" r="7" fill="#ffc961"/>
+  <circle cx="174" cy="106" r="7" fill="#6ee7a3"/>
+
+  <g filter="url(#glow)" font-family="Cascadia Code, Consolas, Monaco, monospace" text-anchor="middle">
+    <text x="256" y="192" font-size="42" font-weight="800" fill="#4ed7c8">/\_/\</text>
+    <text x="256" y="245" font-size="42" font-weight="800" fill="#dce7f4">( o.o )</text>
+    <text x="256" y="300" font-size="42" font-weight="800" fill="#4ed7c8">&gt; ^ &lt;</text>
+    <text x="256" y="358" font-size="39" font-weight="900" letter-spacing="4" fill="#dce7f4">PoCi</text>
+    <text x="256" y="392" font-size="18" font-weight="800" letter-spacing="5" fill="#7d91a8">HASH MONITOR</text>
   </g>
-  <path d="M101 98h42v42h-42z" fill="url(#mint)" opacity="0.98"/>
-  <text x="122" y="128" text-anchor="middle" dominant-baseline="middle" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="28" fill="#061311">P</text>
 </svg>
