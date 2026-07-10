@@ -2,12 +2,12 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.4.22"
+version: "1.4.23"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/main/pocisys-hash-monitor/icon.svg
 description: >-
   PoCiSys Hash Monitor is a lightweight, read-only dashboard built by
-  12gaugekenshin for monitoring multiple AxeOS, NerdAxe/NerdQaxe, and LuxOS
+  12GaugeKenshin for monitoring multiple AxeOS, NerdAxe/NerdQaxe, and LuxOS
   miners from one place.
 
 
@@ -32,8 +32,8 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Adds built-by attribution and official PoCiSys, GitHub, and X links in the
-  app settings and Umbrel metadata.
+  Adds a persistent Built by 12GaugeKenshin banner and expands the About
+  section with the PoCiSys infrastructure mission.
 dependencies: []
 path: ""
 defaultUsername: ""

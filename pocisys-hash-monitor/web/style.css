@@ -136,7 +136,7 @@ nav a:hover, nav a.active { color: var(--text); border-color: var(--cyan); }
 .connection.live i { background: var(--green); }
 .connection.down i { background: var(--red); }
 
-main { width: min(1480px, calc(100% - 48px)); margin: 0 auto; padding: 35px 0 64px; }
+main { width: min(1480px, calc(100% - 48px)); margin: 0 auto; padding: 35px 0 96px; }
 .page { display: none; }
 .page.active { display: block; animation: appear .18s ease-out; }
 @keyframes appear { from { opacity: .3; transform: translateY(4px); } }
@@ -223,7 +223,7 @@ td small { display: block; color: var(--muted); }
 .discord-icon { display: grid; place-items: center; width: 43px; height: 43px; border-radius: 12px; background: #5865f2; font-weight: 900; }
 .discord-card p { margin: 2px 0 0; color: var(--muted); }
 .config-view { max-height: 70vh; overflow: auto; margin: 0; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); color: #b7d0e9; background: #0b1119; font: 12px/1.65 "Cascadia Code", Consolas, monospace; }
-#toast { position: fixed; right: 24px; bottom: 24px; max-width: 360px; padding: 12px 16px; border: 1px solid #33516e; border-radius: 10px; background: #142235; box-shadow: 0 12px 30px #0008; opacity: 0; pointer-events: none; transform: translateY(8px); transition: .2s; }
+#toast { position: fixed; right: 24px; bottom: 68px; max-width: 360px; padding: 12px 16px; border: 1px solid #33516e; border-radius: 10px; background: #142235; box-shadow: 0 12px 30px #0008; opacity: 0; pointer-events: none; transform: translateY(8px); transition: .2s; }
 #toast.show { opacity: 1; transform: translateY(0); }
 
 @media (max-width: 1100px) {
@@ -438,10 +438,36 @@ td small { display: block; color: var(--muted); }
 .settings-icon { flex: 0 0 auto; display: grid; place-items: center; width: 39px; height: 39px; border: 1px solid #2c455a; border-radius: 11px; color: var(--cyan); background: #11202c; font-weight: 850; font-size: 18px; }
 .discord-color { color: white; border-color: #7079ff; background: #5865f2; }
 .about-card { background: linear-gradient(135deg, rgba(16,23,34,.88), rgba(13,35,42,.76)); }
+.about-copy { font-size: 12px; line-height: 1.65; }
+.about-copy strong { color: var(--text); }
 .creator-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
 .creator-links a { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 0 13px; border: 1px solid rgba(75,221,211,.28); border-radius: 999px; color: var(--cyan); background: rgba(75,221,211,.08); font-weight: 800; text-decoration: none; }
 .creator-links a:hover { border-color: rgba(75,221,211,.55); background: rgba(75,221,211,.14); box-shadow: 0 0 22px rgba(75,221,211,.10); }
-.settings-save { grid-column: 1 / -1; position: sticky; bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 13px 15px; border: 1px solid #294057; border-radius: 12px; color: var(--muted); background: rgba(13,21,31,.94); backdrop-filter: blur(14px); box-shadow: 0 12px 40px rgba(0,0,0,.3); }
+.settings-save { grid-column: 1 / -1; position: sticky; bottom: 64px; display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 13px 15px; border: 1px solid #294057; border-radius: 12px; color: var(--muted); background: rgba(13,21,31,.94); backdrop-filter: blur(14px); box-shadow: 0 12px 40px rgba(0,0,0,.3); }
+
+.builder-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 12px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: calc(100% - 28px);
+  min-height: 38px;
+  padding: 7px 13px;
+  border: 1px solid rgba(75,221,211,.24);
+  border-radius: 999px;
+  color: #9fb1c7;
+  background: rgba(7, 12, 18, .76);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 40px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.04);
+  transform: translateX(-50%);
+}
+.builder-banner strong { color: var(--text); }
+.builder-banner a { color: var(--cyan); font-size: 12px; font-weight: 850; text-decoration: none; }
+.builder-banner a:hover { color: #8ff7ec; }
 
 label { display: block; }
 [hidden] { display: none !important; }
@@ -683,6 +709,7 @@ body.screen-active .cat-watermark img { opacity: .22; }
   .dialog-actions { grid-template-columns: 1fr 1fr; }
   .dialog-actions span { display: none; }
   .settings-save { position: static; align-items: stretch; flex-direction: column; }
+  .builder-banner { width: calc(100% - 22px); gap: 9px; font-size: 12px; }
   .alert-toggle-grid { grid-template-columns: 1fr; }
   .alert-toggle-grid .switch-row:nth-child(2) { border-top: 1px solid var(--line); }
   .screen-status-grid, .screen-main-grid { grid-template-columns: 1fr; }

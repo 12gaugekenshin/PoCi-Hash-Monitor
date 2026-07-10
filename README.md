@@ -8,14 +8,26 @@ Add this Community App Store URL in Umbrel:
 https://github.com/12gaugekenshin/PoCi-Hash-Monitor
 ```
 
-Version 1.4.22 uses the public multi-architecture Python image. The container
+Version 1.4.23 uses the public multi-architecture Python image. The container
 downloads this repository's app source at startup and runs it from `/tmp`, so
 Umbrel only persists `/data/config.json`. It does not require GitHub Actions,
 pip installs, bind-mounted repo files, or a custom container package. Config
 saves use a simple direct JSON write for maximum UmbrelOS compatibility, and
 a tiny supervisor restarts the backend if it ever exits unexpectedly.
 
-Built by [12gaugekenshin](https://github.com/12gaugekenshin).
+Built by [12GaugeKenshin](https://github.com/12gaugekenshin).
+
+**PoCiSys is building an open, verifiable infrastructure stack for AI auditing
+and cryptocurrency mining.** Its AI auditing system monitors model and agent
+behavior through timing, performance, configuration, and operational signals,
+helping detect drift, tampering, unauthorized changes, and other anomalies
+without exposing private prompts, training data, or proprietary models.
+
+Alongside it, PoCi Hash Monitor provides lightweight tools for managing mining
+hardware, monitoring pools and nodes, tracking performance, and supporting
+self-hosted BTC, BCH, and KAS infrastructure. Together, these systems create a
+transparent foundation for proving compute integrity across both AI and
+decentralized networks.
 
 - Website: https://pocisys.io/
 - X: https://x.com/12gaugekenshin
