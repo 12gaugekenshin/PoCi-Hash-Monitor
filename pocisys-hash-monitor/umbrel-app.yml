@@ -2,9 +2,9 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.4.7"
+version: "1.4.8"
 tagline: Read-only monitoring for your SHA-256 miner fleet
-icon: icon.svg
+icon: https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/main/pocisys-hash-monitor/icon.svg
 description: >-
   PoCiSys Hash Monitor is a lightweight, read-only dashboard for monitoring
   multiple AxeOS, NerdAxe/NerdQaxe, and LuxOS miners from one place.
@@ -31,8 +31,8 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Restores Umbrel desktop/home-screen icon compatibility by switching back to a
-  self-contained icon.svg that embeds the PoCiSys cat logo.
+  Uses a pure-vector public icon URL for Umbrel home-screen compatibility and
+  restores the cat watermark inside the low-burn Screen page.
 dependencies: []
 path: ""
 defaultUsername: ""
