@@ -17,7 +17,7 @@
     <nav>
       <a href="/" data-link>Dashboard</a>
       <a href="/miners" data-link>Miners</a>
-      <a href="/pools" data-link>Local Pool</a>
+      <a href="/pools" data-link>Pools</a>
       <a href="/odds" data-link>Block Odds</a>
       <a href="/alerts" data-link>Alerts</a>
       <a href="/screen" data-link>Screen</a>
@@ -44,7 +44,7 @@
       <div id="dashboard-miners"></div>
       <div class="split">
         <section class="panel"><div class="panel-title"><h2>Block odds</h2><a href="/odds" data-link>Details →</a></div><div id="dashboard-odds"></div></section>
-        <section class="panel"><div class="panel-title"><h2>Local pool monitor</h2><a href="/pools" data-link>Event feed →</a></div><div id="dashboard-pools"></div></section>
+        <section class="panel"><div class="panel-title"><h2>Pools</h2><a href="/pools" data-link>Pool tools →</a></div><div id="dashboard-pools"></div></section>
       </div>
     </section>
 
@@ -62,11 +62,17 @@
 
     <section id="page-pools" class="page">
       <div class="page-heading">
-        <div><p class="eyebrow">Self-hosted pool · bounded memory</p><h1>Local pool monitor</h1><p>Connect a self-hosted Public Pool HTTP API or tail a mounted local pool log. External stratum URLs are mining endpoints, not stats APIs.</p></div>
-        <button class="primary" data-action="add-pool">+ Connect local pool</button>
+        <div><p class="eyebrow">Pool tools · bounded memory</p><h1>Pools</h1><p>Monitor your self-hosted pool and estimate connectivity from UmbrelOS to an external Stratum endpoint.</p></div>
       </div>
+      <section class="pool-section-head"><div><h2>Local Pool Monitor</h2><p>Connect a self-hosted Public Pool HTTP API or tail a mounted local pool log.</p></div><button class="primary" data-action="add-pool">+ Connect local pool</button></section>
       <div id="pool-management" class="management-grid"></div>
-      <section class="panel feed-panel"><div class="panel-title"><h2>Live event feed</h2><span id="pool-event-total" class="pill">0 events</span></div><div id="pool-events" class="feed"></div></section>
+      <section class="panel pool-connection-tool">
+        <div class="panel-title"><div><h2>External Pool Connection Test</h2><p>Three lightweight TCP connection attempts from this UmbrelOS device. No login, subscription, credentials, or shares are sent.</p></div><span class="pill">30s hard cooldown</span></div>
+        <div class="pool-test-controls"><label><span>Stratum endpoint</span><input id="pool-test-target" type="text" maxlength="320" placeholder="stratum+tcp://pool.example:3333" autocomplete="off" spellcheck="false"></label><button id="pool-test-button" class="primary" data-action="test-external-pool">Test connection</button></div>
+        <p class="pool-test-notice">Pool endpoint reachability from UmbrelOS is only an estimate. It does not verify miner firmware compatibility, credentials, accepted shares, Stratum compatibility, or miner Wi-Fi quality.</p>
+        <div id="pool-test-result" class="pool-test-result"><div class="empty compact-empty">No external pool has been tested during this app session.</div></div>
+      </section>
+      <section class="panel feed-panel"><div class="panel-title"><h2>Local Pool Event Feed</h2><span id="pool-event-total" class="pill">0 events</span></div><div id="pool-events" class="feed"></div></section>
     </section>
 
     <section id="page-odds" class="page">
@@ -108,7 +114,7 @@
           </section>
           <aside class="screen-side">
             <section class="screen-panel">
-              <div class="screen-panel-title"><h2>Local pools</h2><span class="pill">Live</span></div>
+              <div class="screen-panel-title"><h2>Pools</h2><span class="pill">Live</span></div>
               <div id="screen-pools" class="screen-list"></div>
             </section>
             <section class="screen-panel">

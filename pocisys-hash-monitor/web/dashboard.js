@@ -12,6 +12,8 @@ let managedPools = [];
 let settings = null;
 let activeGroup = "All";
 let activeOddsCoin = "all";
+let poolTestCooldownUntil = 0;
+let poolTestCooldownTimer = null;
 let pointerStart = null;
 let suppressNextClick = false;
 let hideIps = localStorage.getItem("pocisys-hide-ips") === "true";
@@ -406,7 +408,10 @@ function route() {
     element.classList.toggle("active", target === path || (detailMatch && target === "/miners"));
   });
   if (detailMatch) renderMinerDetail(detailMatch[1]);
-  if (page === "pools") loadPoolEvents();
+  if (page === "pools") {
+    loadPoolEvents();
+    loadPoolConnectionTest();
+  }
   if (page === "settings" && settings) fillSettings();
   if (location.hash) setTimeout(() => document.querySelector(location.hash)?.scrollIntoView({behavior: "smooth"}), 40);
   window.scrollTo({top: 0, behavior: "instant"});
@@ -717,6 +722,77 @@ async function loadPoolEvents() {
   } catch (_) {}
 }
 
+function updatePoolTestButton() {
+  const button = $("#pool-test-button");
+  if (!button) return;
+  const remaining = Math.max(0, Math.ceil((poolTestCooldownUntil - Date.now()) / 1000));
+  button.disabled = remaining > 0;
+  button.textContent = remaining > 0 ? `Test again in ${remaining}s` : "Test connection";
+  if (!remaining && poolTestCooldownTimer) {
+    clearInterval(poolTestCooldownTimer);
+    poolTestCooldownTimer = null;
+  }
+}
+
+function setPoolTestCooldown(seconds) {
+  poolTestCooldownUntil = Date.now() + Math.max(0, Number(seconds) || 0) * 1000;
+  if (poolTestCooldownTimer) clearInterval(poolTestCooldownTimer);
+  poolTestCooldownTimer = seconds > 0 ? setInterval(updatePoolTestButton, 250) : null;
+  updatePoolTestButton();
+}
+
+function renderPoolConnectionTest(payload) {
+  setPoolTestCooldown(payload?.cooldown_remaining || 0);
+  const result = payload?.result;
+  const container = $("#pool-test-result");
+  if (!container) return;
+  if (!result) {
+    container.innerHTML = `<div class="empty compact-empty">No external pool has been tested during this app session.</div>`;
+    return;
+  }
+  const input = $("#pool-test-target");
+  if (input && !input.value) input.value = result.target || "";
+  const stateClass = result.reachable ? "good" : "bad";
+  const stateLabel = result.reachable ? "Endpoint reachable" : "Endpoint unreachable";
+  container.innerHTML = `<div class="pool-test-status"><i class="status-dot" style="background:var(--${result.reachable ? "green" : "red"})"></i><div><strong class="${stateClass}">${stateLabel}</strong><span>${escapeHtml(result.target)} · Tested ${appTime(result.tested_at)}</span></div></div>
+    <div class="pool-test-metrics">
+      <div><label>DNS lookup</label><strong>${result.dns_ms == null ? "—" : `${number(result.dns_ms, 1)} ms`}</strong></div>
+      <div><label>Successful attempts</label><strong>${number(result.successes || 0, 0)} / ${number(result.attempts || 3, 0)}</strong></div>
+      <div><label>Minimum</label><strong>${result.min_ms == null ? "—" : `${number(result.min_ms, 1)} ms`}</strong></div>
+      <div><label>Average</label><strong>${result.average_ms == null ? "—" : `${number(result.average_ms, 1)} ms`}</strong></div>
+      <div><label>Maximum</label><strong>${result.max_ms == null ? "—" : `${number(result.max_ms, 1)} ms`}</strong></div>
+      <div><label>Resolved endpoint</label><strong>${result.resolved_ip ? privateMarkup(result.resolved_ip) : "—"}</strong></div>
+    </div>${result.error ? `<p class="pool-test-error">${escapeHtml(result.error)}</p>` : ""}`;
+}
+
+async function loadPoolConnectionTest() {
+  try {
+    renderPoolConnectionTest(await request("/api/pool-connection-test"));
+  } catch (_) {}
+}
+
+async function testExternalPool() {
+  const input = $("#pool-test-target");
+  const button = $("#pool-test-button");
+  const target = input.value.trim();
+  if (!target) {
+    input.focus();
+    toast("Enter an external Stratum pool endpoint.", "warning");
+    return;
+  }
+  button.disabled = true;
+  button.textContent = "Testing…";
+  $("#pool-test-result").innerHTML = `<div class="pool-test-running"><span class="testing-pulse"></span><strong>Testing from UmbrelOS…</strong><span>Three TCP connections, then every socket is closed.</span></div>`;
+  try {
+    const payload = await request("/api/pool-connection-test", {method: "POST", body: {target}});
+    renderPoolConnectionTest(payload);
+    toast(payload.result?.reachable ? "External pool endpoint is reachable." : "External pool endpoint could not be reached.", payload.result?.reachable ? "success" : "warning");
+  } catch (error) {
+    await loadPoolConnectionTest();
+    throw error;
+  }
+}
+
 function renderAll() {
   if (!state) return;
   renderSummary();
@@ -921,6 +997,7 @@ document.addEventListener("click", async event => {
     }
     if (action === "test-discord") await testDiscord(target);
     if (action === "clear-alerts") await clearRecentAlerts(target);
+    if (action === "test-external-pool") await testExternalPool();
     if (action === "toggle-ip-privacy") {
       setIpPrivacy(!hideIps);
       renderAll();
@@ -958,6 +1035,11 @@ document.addEventListener("click", async event => {
 });
 
 document.addEventListener("keydown", event => {
+  if (event.target.id === "pool-test-target" && event.key === "Enter") {
+    event.preventDefault();
+    $("#pool-test-button")?.click();
+    return;
+  }
   const card = event.target.closest?.('[data-action="open-miner"]');
   if (card && (event.key === "Enter" || event.key === " ")) {
     event.preventDefault();

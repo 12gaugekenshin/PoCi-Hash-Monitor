@@ -19,6 +19,7 @@ from services.network_data import NetworkDataService
 from services.odds import calculate_odds
 from services.poller import MinerPoller
 from services.pool_logs import PoolLogService, probe_public_pool
+from services.pool_probe import PoolConnectionProbe, PoolProbeCooldown
 
 
 ROOT = Path(__file__).resolve().parent
@@ -132,6 +133,7 @@ alerts = AlertEngine(config)
 poller = MinerPoller(config, alerts)
 pool_logs = PoolLogService(config.get("pools", []), alerts, poller.statuses)
 network_data = NetworkDataService()
+pool_probe = PoolConnectionProbe()
 config_lock = asyncio.Lock()
 
 
@@ -256,7 +258,7 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.4.24"}
+        return {"ok": True, "version": "1.4.25"}
     if method == "GET" and path == "/api/status":
         try:
             pool_statuses = pool_logs.status()
@@ -419,6 +421,15 @@ async def api_dispatch(method, path, data):
             return {"ok": True}
     if method == "GET" and path == "/api/pool-events":
         return {"events": list(pool_logs.events)}
+    if method == "GET" and path == "/api/pool-connection-test":
+        return pool_probe.snapshot()
+    if method == "POST" and path == "/api/pool-connection-test":
+        try:
+            return await pool_probe.test(data.get("target"))
+        except PoolProbeCooldown as exc:
+            raise ApiError(429, f"Wait {exc.remaining_seconds} seconds before testing another pool")
+        except ValueError as exc:
+            raise ApiError(400, str(exc))
     if method == "GET" and path == "/api/odds":
         return calculate_odds(statuses, config, network_data.snapshot())
     if method == "GET" and path == "/api/network-data":
@@ -534,7 +545,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.4.24"
+    server_version = "PoCiSys/1.4.25"
     protocol_version = "HTTP/1.1"
 
     def log_message(self, _format, *_args):
@@ -658,7 +669,7 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.4.24 starting", flush=True)
+    print("PoCiSys Hash Monitor 1.4.25 starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()
