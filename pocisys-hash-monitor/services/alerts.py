@@ -42,6 +42,7 @@ class AlertEngine:
         self.best_diff = {}
         self.alert_feed = deque(maxlen=25)
         self.discord_last_result = None
+        self.snooze_until = 0.0
 
     def reconfigure(self):
         self.cooldown = self.config.get("app", {}).get("alert_cooldown_seconds", 600)
@@ -66,12 +67,50 @@ class AlertEngine:
         self.alert_feed.appendleft(event)
         return event
 
-    async def emit(self, key, title, message, severity="warning", source="system", force=False, url=None):
+    def snooze_status(self):
+        remaining = max(0, int(self.snooze_until - time.monotonic() + 0.999)) if self.snooze_until else 0
+        if self.snooze_until and not remaining:
+            self.snooze_until = 0.0
+            self._record(
+                "Discord Alerts Resumed",
+                "Routine Discord alerts resumed automatically after the snooze timer expired.",
+                "success",
+                "system",
+            )
+        return {
+            "snoozed": remaining > 0,
+            "snooze_remaining_seconds": remaining,
+        }
+
+    def snooze(self, seconds):
+        duration = int(seconds)
+        if duration not in {900, 1800, 3600}:
+            raise ValueError("Choose a 15, 30, or 60 minute alert snooze")
+        self.snooze_until = time.monotonic() + duration
+        self._record(
+            "Discord Alerts Snoozed",
+            f"Routine Discord alerts snoozed for {duration // 60} minutes. Critical block and local-pool events remain armed.",
+            "info",
+            "system",
+        )
+        return self.status()
+
+    def resume(self):
+        was_snoozed = self.snooze_status()["snoozed"]
+        self.snooze_until = 0.0
+        if was_snoozed:
+            self._record("Discord Alerts Resumed", "Routine Discord alerts resumed manually.", "success", "system")
+        return self.status()
+
+    async def emit(self, key, title, message, severity="warning", source="system", force=False, url=None, bypass_snooze=False):
         now = time.monotonic()
         if not force and now - self.last_sent.get(key, -self.cooldown) < self.cooldown:
             return False
         self.last_sent[key] = now
         self._record(title, message, severity, source)
+        if self.snooze_status()["snoozed"] and not bypass_snooze:
+            self.discord_last_result = {"sent": False, "reason": "Routine Discord alerts are snoozed"}
+            return True
         self.discord_last_result = await self.discord.send(title, message, severity, url=url)
         return True
 
@@ -204,7 +243,7 @@ class AlertEngine:
                     f"{miner_key}:block-found",
                     "BLOCK Block Found",
                     f"{name}\nMiner block count: {blocks_found}\nCheck the miner and pool immediately.",
-                    "critical", name, True, miner_url,
+                    "critical", name, True, miner_url, True,
                 )
 
             best = status.get("difficulty", {}).get("best_all_time") or status.get("difficulty", {}).get("best_session")
@@ -246,6 +285,7 @@ class AlertEngine:
                 event["pool"],
                 force=event.get("category") == "block",
                 url=self.dashboard_link("/pools"),
+                bypass_snooze=critical_pool_event,
             )
 
     async def test_discord(self):
@@ -266,9 +306,11 @@ class AlertEngine:
 
     def status(self):
         discord = self.config.get("discord", {})
+        snooze = self.snooze_status()
         return {
             "discord_enabled": bool(discord.get("enabled")),
             "discord_configured": bool(discord.get("webhook_url")),
             "last_discord_result": self.discord_last_result,
             "recent": list(self.alert_feed),
+            **snooze,
         }

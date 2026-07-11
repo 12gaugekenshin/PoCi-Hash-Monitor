@@ -87,6 +87,7 @@
         <div class="heading-actions"><button data-action="clear-alerts">Clear recent alerts</button><button data-action="test-discord">Send Discord test</button></div>
       </div>
       <div id="discord-status"></div>
+      <section class="panel alert-snooze-card"><div><p class="eyebrow">Temporary maintenance mode</p><h2>Snooze routine Discord alerts</h2><p>Local activity remains visible. Block finds, candidates, and critical local-pool events stay armed.</p></div><div id="alert-snooze-controls" class="snooze-controls"></div></section>
       <section class="panel feed-panel"><div class="panel-title"><h2>Recent alert activity</h2><span class="pill">25 max</span></div><div id="alert-events" class="feed"></div></section>
     </section>
 
@@ -104,6 +105,7 @@
           <div class="screen-clock">
             <strong id="screen-time">--:--</strong>
             <span id="screen-updated">Waiting for poll</span>
+            <div id="screen-snooze-controls" class="snooze-controls screen-snooze-controls"></div>
           </div>
         </header>
         <div id="screen-status" class="screen-status-grid"></div>
@@ -150,6 +152,7 @@
           <label><span>Dashboard link URL</span><input name="dashboard_base_url" type="url" placeholder="http://pocisys.local:8765"><small>Discord alert titles link here. Use this dashboard's LAN address for phone access.</small></label>
           <label class="check-row"><input name="clear_webhook" type="checkbox"><span>Remove the saved webhook</span></label>
           <p class="settings-explainer">These switches are dashboard-wide and apply to every enabled miner. Hashrate and temperature limits remain per miner.</p>
+          <div class="settings-snooze"><div><strong>Snooze routine Discord alerts</strong><small>Temporary and memory-only. Critical block and local-pool events bypass snooze.</small></div><div id="settings-snooze-controls" class="snooze-controls"></div></div>
           <div class="toggle-list alert-toggle-grid">
             <label class="switch-row"><span><strong>Miner offline</strong><small>API or miner becomes unavailable.</small></span><input name="send_offline_alerts" type="checkbox" role="switch"></label>
             <label class="switch-row"><span><strong>Recovery alerts</strong><small>Notify when a miner returns online.</small></span><input name="send_recovery_alerts" type="checkbox" role="switch"></label>

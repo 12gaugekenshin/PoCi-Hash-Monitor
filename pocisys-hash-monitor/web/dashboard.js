@@ -14,6 +14,7 @@ let activeGroup = "All";
 let activeOddsCoin = "all";
 let poolTestCooldownUntil = 0;
 let poolTestCooldownTimer = null;
+let alertSnoozeUntil = 0;
 let pointerStart = null;
 let suppressNextClick = false;
 let hideIps = localStorage.getItem("pocisys-hide-ips") === "true";
@@ -655,11 +656,53 @@ function alertFeed(events) {
   return events.map(event => `<div class="feed-item"><span class="feed-time">${appTime(event.time)}</span><span class="feed-source">${escapeHtml(event.source)}</span><div class="feed-message"><strong class="${event.severity === "critical" ? "bad" : event.severity === "warning" ? "warn" : ""}">${escapeHtml(event.title)}</strong><span>${privateMarkup(event.message)}</span></div></div>`).join("");
 }
 
+function snoozeRemaining() {
+  return Math.max(0, Math.ceil((alertSnoozeUntil - Date.now()) / 1000));
+}
+
+function snoozeTime(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m ${String(remainder).padStart(2, "0")}s`;
+}
+
+function snoozeControlsMarkup(compact = false) {
+  const remaining = snoozeRemaining();
+  if (remaining) {
+    return `<span class="snooze-state warn">Snoozed · ${snoozeTime(remaining)}</span><button type="button" data-action="resume-alerts">Resume Alerts</button>`;
+  }
+  return `${compact ? `<span class="snooze-state good">Alerts active</span>` : `<span class="snooze-label">Snooze for</span>`}<button type="button" data-action="snooze-alerts" data-seconds="900">15m</button><button type="button" data-action="snooze-alerts" data-seconds="1800">30m</button><button type="button" data-action="snooze-alerts" data-seconds="3600">1h</button>`;
+}
+
+function updateSnoozeControls() {
+  const remaining = snoozeRemaining();
+  if (!remaining) alertSnoozeUntil = 0;
+  const alertsControl = $("#alert-snooze-controls");
+  const settingsControl = $("#settings-snooze-controls");
+  const screenControl = $("#screen-snooze-controls");
+  const update = (element, compact) => {
+    if (!element) return;
+    const mode = remaining ? "snoozed" : "active";
+    if (element.dataset.snoozeMode !== mode) {
+      element.innerHTML = snoozeControlsMarkup(compact);
+      element.dataset.snoozeMode = mode;
+    } else if (remaining) {
+      const stateLabel = element.querySelector(".snooze-state");
+      if (stateLabel) stateLabel.textContent = `Snoozed · ${snoozeTime(remaining)}`;
+    }
+  };
+  update(alertsControl, false);
+  update(settingsControl, false);
+  update(screenControl, true);
+}
+
 function renderAlerts() {
   const discord = state.discord;
-  const label = discord.discord_enabled && discord.discord_configured ? "Ready" : discord.discord_configured ? "Configured but disabled" : "Not configured";
-  $("#discord-status").innerHTML = `<div class="discord-card"><span class="discord-icon">D</span><div><strong>Dashboard-wide Discord webhook · <span class="${discord.discord_enabled && discord.discord_configured ? "good" : "warn"}">${label}</span></strong><p>One webhook covers miners and local pool critical events. Blocks/candidates send immediately; repeated conditions use cooldowns.</p></div><a class="button-link" href="/settings" data-link>Configure</a></div>`;
+  alertSnoozeUntil = discord.snoozed ? Date.now() + Number(discord.snooze_remaining_seconds || 0) * 1000 : 0;
+  const label = discord.snoozed ? `Routine alerts snoozed · ${snoozeTime(snoozeRemaining())}` : discord.discord_enabled && discord.discord_configured ? "Ready" : discord.discord_configured ? "Configured but disabled" : "Not configured";
+  $("#discord-status").innerHTML = `<div class="discord-card"><span class="discord-icon">D</span><div><strong>Dashboard-wide Discord webhook · <span class="${discord.snoozed || !(discord.discord_enabled && discord.discord_configured) ? "warn" : "good"}">${label}</span></strong><p>One webhook covers miners and local pool critical events. Blocks/candidates send immediately; repeated conditions use cooldowns.</p></div><a class="button-link" href="/settings" data-link>Configure</a></div>`;
   $("#alert-events").innerHTML = alertFeed(discord.recent);
+  updateSnoozeControls();
 }
 
 function screenStatusCard(label, value, sub = "", className = "") {
@@ -962,6 +1005,21 @@ async function clearRecentAlerts(button) {
   }
 }
 
+async function setAlertSnooze(seconds) {
+  const result = await request("/api/alerts/snooze", {method: "POST", body: {seconds}});
+  state.discord = result;
+  renderAlerts();
+  renderScreen();
+  toast(`Routine Discord alerts snoozed for ${seconds / 60} minutes.`, "success");
+}
+
+async function resumeAlerts() {
+  state.discord = await request("/api/alerts/resume", {method: "POST"});
+  renderAlerts();
+  renderScreen();
+  toast("Routine Discord alerts resumed.", "success");
+}
+
 document.addEventListener("click", async event => {
   if (suppressNextClick || window.getSelection()?.toString()) {
     suppressNextClick = false;
@@ -997,6 +1055,8 @@ document.addEventListener("click", async event => {
     }
     if (action === "test-discord") await testDiscord(target);
     if (action === "clear-alerts") await clearRecentAlerts(target);
+    if (action === "snooze-alerts") await setAlertSnooze(Number(target.dataset.seconds));
+    if (action === "resume-alerts") await resumeAlerts();
     if (action === "test-external-pool") await testExternalPool();
     if (action === "toggle-ip-privacy") {
       setIpPrivacy(!hideIps);
@@ -1197,3 +1257,4 @@ setIpPrivacy(hideIps);
 route();
 Promise.all([refresh(), loadManagement(), loadSettings()]).catch(error => toast(error.message, "error"));
 setInterval(refresh, 5000);
+setInterval(updateSnoozeControls, 1000);

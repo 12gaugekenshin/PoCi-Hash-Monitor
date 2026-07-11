@@ -2,7 +2,7 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.4.25"
+version: "1.4.26"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/main/pocisys-hash-monitor/icon.svg
 description: >-
@@ -32,8 +32,8 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Adds an external Stratum pool connection test with three bounded TCP samples,
-  a hardcoded 30-second cooldown, and one replaceable in-memory result.
+  Adds memory-only 15, 30, and 60 minute Discord alert snoozes with automatic
+  resume, while critical block and local-pool events remain armed.
 dependencies: []
 path: ""
 defaultUsername: ""

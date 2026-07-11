@@ -8,22 +8,16 @@ Add this Community App Store URL in Umbrel:
 https://github.com/12gaugekenshin/PoCi-Hash-Monitor
 ```
 
-Version 1.4.25 uses the public multi-architecture Python image. The container
+Version 1.4.26 uses the public multi-architecture Python image. The container
 downloads this repository's app source at startup and runs it from `/tmp`, so
 Umbrel only persists `/data/config.json`. It does not require GitHub Actions,
 pip installs, bind-mounted repo files, or a custom container package. Config
 saves use a simple direct JSON write for maximum UmbrelOS compatibility, and
 a tiny supervisor restarts the backend if it ever exits unexpectedly.
 
-The Block Odds page includes switchable, current-only BTC, BCH, BSV, XEC,
-DigiByte SHA-256, and Cheetahcoin trackers. CHTA is clearly marked as a
-CEA/RandomSpike estimate because its network deliberately does not behave like
-Bitcoin's standard difficulty cycle.
-
-The Pools page also includes an on-demand external Stratum connectivity test.
-Each test makes three short TCP connections, enforces a non-configurable
-30-second global cooldown, and replaces the one current in-memory result. It
-does not authenticate, subscribe, submit shares, or save test history.
+The latest release adds memory-only 15, 30, and 60 minute snoozes for routine
+Discord alerts. Snoozes automatically expire, local activity remains visible,
+and critical block and local-pool events remain armed.
 
 Built by [12GaugeKenshin](https://github.com/12gaugekenshin).
 
