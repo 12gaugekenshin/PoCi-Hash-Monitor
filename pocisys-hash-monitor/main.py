@@ -206,9 +206,17 @@ def current_settings():
         "verbose_pool_events": discord.get("verbose_pool_events", False),
         "btc_enabled": odds.get("btc_enabled", True),
         "bch_enabled": odds.get("bch_enabled", True),
+        "bsv_enabled": odds.get("bsv_enabled", True),
+        "xec_enabled": odds.get("xec_enabled", True),
+        "dgb_enabled": odds.get("dgb_enabled", True),
+        "chta_enabled": odds.get("chta_enabled", True),
         "auto_network_data": odds.get("auto_network_data", True),
         "manual_btc_network_hashrate_eh": odds.get("manual_btc_network_hashrate_eh"),
         "manual_bch_network_hashrate_eh": odds.get("manual_bch_network_hashrate_eh"),
+        "manual_bsv_network_hashrate_eh": odds.get("manual_bsv_network_hashrate_eh"),
+        "manual_xec_network_hashrate_eh": odds.get("manual_xec_network_hashrate_eh"),
+        "manual_dgb_network_hashrate_eh": odds.get("manual_dgb_network_hashrate_eh"),
+        "manual_chta_network_hashrate_eh": odds.get("manual_chta_network_hashrate_eh"),
     }
 
 
@@ -248,7 +256,7 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.4.23"}
+        return {"ok": True, "version": "1.4.24"}
     if method == "GET" and path == "/api/status":
         try:
             pool_statuses = pool_logs.status()
@@ -473,9 +481,17 @@ async def api_dispatch(method, path, data):
             updated["odds"].update(
                 btc_enabled=bool(data.get("btc_enabled", True)),
                 bch_enabled=bool(data.get("bch_enabled", True)),
+                bsv_enabled=bool(data.get("bsv_enabled", True)),
+                xec_enabled=bool(data.get("xec_enabled", True)),
+                dgb_enabled=bool(data.get("dgb_enabled", True)),
+                chta_enabled=bool(data.get("chta_enabled", True)),
                 auto_network_data=bool(data.get("auto_network_data", True)),
                 manual_btc_network_hashrate_eh=as_float(data.get("manual_btc_network_hashrate_eh"), None),
                 manual_bch_network_hashrate_eh=as_float(data.get("manual_bch_network_hashrate_eh"), None),
+                manual_bsv_network_hashrate_eh=as_float(data.get("manual_bsv_network_hashrate_eh"), None),
+                manual_xec_network_hashrate_eh=as_float(data.get("manual_xec_network_hashrate_eh"), None),
+                manual_dgb_network_hashrate_eh=as_float(data.get("manual_dgb_network_hashrate_eh"), None),
+                manual_chta_network_hashrate_eh=as_float(data.get("manual_chta_network_hashrate_eh"), None),
             )
             commit_config(updated)
         return {
@@ -518,7 +534,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.4.23"
+    server_version = "PoCiSys/1.4.24"
     protocol_version = "HTTP/1.1"
 
     def log_message(self, _format, *_args):
@@ -642,7 +658,7 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.4.23 starting", flush=True)
+    print("PoCiSys Hash Monitor 1.4.24 starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()

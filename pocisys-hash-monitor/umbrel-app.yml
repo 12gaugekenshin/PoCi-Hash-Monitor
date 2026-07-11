@@ -2,7 +2,7 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.4.23"
+version: "1.4.24"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/main/pocisys-hash-monitor/icon.svg
 description: >-
@@ -13,7 +13,7 @@ description: >-
 
   View live hashrate, temperatures, cooling, share quality, compact best
   difficulty, chip and hashboard health, self-hosted Public Pool workers, and automatic
-  BTC/BCH network data. Configure dashboard-wide Discord alerts for miner
+  BTC/BCH/BSV/XEC/DGB/CHTA network data. Configure dashboard-wide Discord alerts for miner
   outages, recoveries, low hashrate, temperature, pool switches, bad shares,
   best difficulty, and block events.
 
@@ -32,8 +32,8 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Adds a persistent Built by 12GaugeKenshin banner and expands the About
-  section with the PoCiSys infrastructure mission.
+  Adds a switchable SHA-256 coin tracker with live BTC, BCH, BSV, XEC, DigiByte
+  SHA-256, and Cheetahcoin prices, difficulty, hashrate, and block odds.
 dependencies: []
 path: ""
 defaultUsername: ""

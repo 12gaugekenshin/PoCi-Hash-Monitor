@@ -29,8 +29,16 @@
   "odds": {
     "btc_enabled": true,
     "bch_enabled": true,
+    "bsv_enabled": true,
+    "xec_enabled": true,
+    "dgb_enabled": true,
+    "chta_enabled": true,
     "auto_network_data": true,
     "manual_btc_network_hashrate_eh": null,
-    "manual_bch_network_hashrate_eh": null
+    "manual_bch_network_hashrate_eh": null,
+    "manual_bsv_network_hashrate_eh": null,
+    "manual_xec_network_hashrate_eh": null,
+    "manual_dgb_network_hashrate_eh": null,
+    "manual_chta_network_hashrate_eh": null
   }
 }

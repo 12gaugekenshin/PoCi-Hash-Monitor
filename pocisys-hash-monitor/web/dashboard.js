@@ -11,6 +11,7 @@ let managedMiners = [];
 let managedPools = [];
 let settings = null;
 let activeGroup = "All";
+let activeOddsCoin = "all";
 let pointerStart = null;
 let suppressNextClick = false;
 let hideIps = localStorage.getItem("pocisys-hide-ips") === "true";
@@ -54,9 +55,17 @@ const DEFAULT_SETTINGS = {
   verbose_pool_events: false,
   btc_enabled: true,
   bch_enabled: true,
+  bsv_enabled: true,
+  xec_enabled: true,
+  dgb_enabled: true,
+  chta_enabled: true,
   auto_network_data: true,
   manual_btc_network_hashrate_eh: null,
   manual_bch_network_hashrate_eh: null,
+  manual_bsv_network_hashrate_eh: null,
+  manual_xec_network_hashrate_eh: null,
+  manual_dgb_network_hashrate_eh: null,
+  manual_chta_network_hashrate_eh: null,
 };
 
 const TYPE_LABELS = {
@@ -329,7 +338,9 @@ function fanSummary(miner) {
 
 function money(value) {
   if (value === null || value === undefined) return "—";
-  return Number(value).toLocaleString(undefined, {style: "currency", currency: "USD", maximumFractionDigits: value < 1000 ? 2 : 0});
+  const numeric = Number(value);
+  const digits = numeric > 0 && numeric < 0.01 ? 8 : numeric < 1000 ? 2 : 0;
+  return numeric.toLocaleString(undefined, {style: "currency", currency: "USD", maximumFractionDigits: digits});
 }
 
 function statusFor(id) {
@@ -579,22 +590,40 @@ function renderMinerDetail(id) {
   </div>`;
 }
 
+function coinMark(symbol) {
+  return {BTC: "₿", BCH: "B", BSV: "S", XEC: "X", DGB: "D", CHTA: "C"}[symbol] || symbol?.[0] || "?";
+}
+
+function networkHashrate(item) {
+  if (!item?.network_hashrate_eh) return "—";
+  const [value, unit] = compactHashrate(Number(item.network_hashrate_eh) * 1_000_000);
+  return `${value} ${unit}`;
+}
+
 function networkLine(item) {
-  if (!item.available) return `<div class="network-line"><span class="coin ${item.symbol === "BCH" ? "bch" : ""}">${item.symbol === "BTC" ? "₿" : "B"}</span><div><strong>${item.symbol}</strong><small>${escapeHtml(item.message)}</small></div><strong>—</strong></div>`;
-  return `<div class="network-line"><span class="coin ${item.symbol === "BCH" ? "bch" : ""}">${item.symbol === "BTC" ? "₿" : "B"}</span><div><strong>${item.symbol}</strong><small>${money(item.price_usd)} · ${number(item.network_hashrate_eh, 2)} EH/s · ${item.network_source}</small></div><strong>${percent(item.daily_chance)} / day</strong></div>`;
+  if (!item?.enabled) return "";
+  const symbol = item.symbol || "?";
+  if (!item.available) return `<div class="network-line"><span class="coin ${symbol.toLowerCase()}">${coinMark(symbol)}</span><div><strong>${symbol}</strong><small>${escapeHtml(item.message)}</small></div><strong>—</strong></div>`;
+  return `<div class="network-line"><span class="coin ${symbol.toLowerCase()}">${coinMark(symbol)}</span><div><strong>${symbol}</strong><small>${money(item.price_usd)} · ${networkHashrate(item)} · ${escapeHtml(item.network_source)}</small></div><strong>${percent(item.daily_chance)} / day</strong></div>`;
 }
 
 function oddsCard(item) {
-  if (!item.available) return `<article class="odds-card"><header><span class="coin">${item.symbol}</span><div><h2>${item.symbol}</h2><p>${escapeHtml(item.message)}</p></div></header></article>`;
-  return `<article class="odds-card"><header><span class="coin ${item.symbol === "BCH" ? "bch" : ""}">${item.symbol === "BTC" ? "₿" : "B"}</span><div><h2>${item.symbol}</h2><p>${number(item.network_hashrate_eh, 3)} EH/s · ${item.network_source}</p></div><strong class="coin-price">${money(item.price_usd)}</strong></header><div class="odds-stats">
+  const symbol = item?.symbol || "?";
+  if (!item?.available) return `<article class="odds-card"><header><span class="coin ${symbol.toLowerCase()}">${coinMark(symbol)}</span><div><h2>${symbol}</h2><p>${escapeHtml(item?.message || "Network data unavailable")}</p></div></header></article>`;
+  return `<article class="odds-card"><header><span class="coin ${symbol.toLowerCase()}">${coinMark(symbol)}</span><div><h2>${symbol}</h2><p>${networkHashrate(item)} · ${escapeHtml(item.network_source)}</p></div><strong class="coin-price">${money(item.price_usd)}</strong></header><div class="odds-stats">
     <div class="odds-stat"><label>Daily chance</label><strong>${percent(item.daily_chance)}</strong></div><div class="odds-stat"><label>Weekly chance</label><strong>${percent(item.weekly_chance)}</strong></div>
     <div class="odds-stat"><label>Network difficulty</label><strong>${difficulty(item.difficulty)}</strong></div><div class="odds-stat"><label>Estimated time</label><strong>${duration(item.estimated_days_to_block)}</strong></div>
-  </div></article>`;
+  </div>${item.estimate_note ? `<p class="odds-note">${escapeHtml(item.estimate_note)}</p>` : ""}</article>`;
 }
 
 function renderOdds() {
-  $("#dashboard-odds").innerHTML = networkLine(state.odds.btc) + networkLine(state.odds.bch);
-  $("#odds-content").innerHTML = oddsCard(state.odds.btc) + oddsCard(state.odds.bch);
+  const coins = [state.odds.btc, state.odds.bch, state.odds.bsv, state.odds.xec, state.odds.dgb, state.odds.chta].filter(item => item?.enabled);
+  if (activeOddsCoin !== "all" && !coins.some(item => item.symbol.toLowerCase() === activeOddsCoin)) activeOddsCoin = "all";
+  const visible = activeOddsCoin === "all" ? coins : coins.filter(item => item.symbol.toLowerCase() === activeOddsCoin);
+  $("#dashboard-odds").innerHTML = coins.map(networkLine).join("") || `<div class="empty-inline">Enable coins in Block Odds settings.</div>`;
+  $("#odds-filters").innerHTML = [`<button class="filter-chip ${activeOddsCoin === "all" ? "active" : ""}" data-action="filter-odds" data-coin="all">All</button>`, ...coins.map(item => `<button class="filter-chip ${activeOddsCoin === item.symbol.toLowerCase() ? "active" : ""}" data-action="filter-odds" data-coin="${item.symbol.toLowerCase()}">${item.symbol}</button>`)].join("");
+  $("#odds-content").classList.toggle("single", visible.length === 1);
+  $("#odds-content").innerHTML = visible.length ? visible.map(oddsCard).join("") : `<div class="empty-action"><h2>No coin trackers enabled</h2><p>Enable at least one SHA-256 coin in Settings.</p></div>`;
 }
 
 function renderDashboardPools() {
@@ -882,6 +911,7 @@ document.addEventListener("click", async event => {
     if (action === "delete-pool") await deletePool(target.dataset.id);
     if (action === "close-dialog") target.closest("dialog").close();
     if (action === "filter-group") { activeGroup = target.dataset.group; renderMiners(); }
+    if (action === "filter-odds") { activeOddsCoin = target.dataset.coin || "all"; renderOdds(); }
     if (action === "poll-now") {
       target.disabled = true;
       await request("/api/poll-now", {method: "POST"});
@@ -1021,9 +1051,17 @@ $("#settings-form").addEventListener("submit", async event => {
     verbose_pool_events: form.elements.verbose_pool_events.checked,
     btc_enabled: form.elements.btc_enabled.checked,
     bch_enabled: form.elements.bch_enabled.checked,
+    bsv_enabled: form.elements.bsv_enabled.checked,
+    xec_enabled: form.elements.xec_enabled.checked,
+    dgb_enabled: form.elements.dgb_enabled.checked,
+    chta_enabled: form.elements.chta_enabled.checked,
     auto_network_data: form.elements.auto_network_data.checked,
     manual_btc_network_hashrate_eh: nullableNumber(form.elements.manual_btc_network_hashrate_eh.value),
     manual_bch_network_hashrate_eh: nullableNumber(form.elements.manual_bch_network_hashrate_eh.value),
+    manual_bsv_network_hashrate_eh: nullableNumber(form.elements.manual_bsv_network_hashrate_eh.value),
+    manual_xec_network_hashrate_eh: nullableNumber(form.elements.manual_xec_network_hashrate_eh.value),
+    manual_dgb_network_hashrate_eh: nullableNumber(form.elements.manual_dgb_network_hashrate_eh.value),
+    manual_chta_network_hashrate_eh: nullableNumber(form.elements.manual_chta_network_hashrate_eh.value),
   };
   const submit = $('button[type="submit"]', form);
   submit.disabled = true;

@@ -192,6 +192,10 @@ h2 { margin-bottom: 2px; font-size: 17px; letter-spacing: -.01em; }
 .network-line:first-child { border-top: 0; }
 .coin { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: #f5a623; color: #1c1203; font-weight: 900; }
 .coin.bch { background: #41c884; }
+.coin.bsv { background: #eab300; color: #211900; }
+.coin.xec { background: #3b69ff; color: #f5f8ff; }
+.coin.dgb { background: #1769aa; color: #eef8ff; }
+.coin.chta { background: #b99b72; color: #16120d; }
 .network-line small { display: block; color: var(--muted); }
 .network-line strong { font-variant-numeric: tabular-nums; }
 
@@ -210,6 +214,8 @@ td small { display: block; color: var(--muted); }
 .feed-message span { color: var(--muted); overflow-wrap: anywhere; }
 
 .odds-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.odds-grid.single { grid-template-columns: minmax(0, 1fr); }
+.odds-filters { margin: -4px 0 18px; }
 .odds-card { padding: 22px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
 .odds-card header { display: flex; align-items: center; gap: 12px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
 .odds-card header h2 { font-size: 22px; }
@@ -218,6 +224,7 @@ td small { display: block; color: var(--muted); }
 .odds-stat { padding: 15px; border-radius: 11px; background: var(--panel-2); }
 .odds-stat label { display: block; color: var(--muted); font-size: 11px; }
 .odds-stat strong { display: block; margin-top: 7px; font-size: 20px; }
+.odds-note { margin: 14px 0 0; color: var(--amber); font-size: 12px; line-height: 1.5; }
 
 .discord-card { display: flex; align-items: center; gap: 14px; margin-bottom: 15px; padding: 17px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
 .discord-icon { display: grid; place-items: center; width: 43px; height: 43px; border-radius: 12px; background: #5865f2; font-weight: 900; }

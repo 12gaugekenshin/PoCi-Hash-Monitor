@@ -70,7 +70,8 @@
     </section>
 
     <section id="page-odds" class="page">
-      <div class="page-heading"><div><p class="eyebrow">Solo mining calculator</p><h1>Block odds</h1><p>Live fleet hashrate against automatically refreshed BTC and BCH network data.</p></div><a class="button-link" href="/settings#odds-settings" data-link>Data settings</a></div>
+      <div class="page-heading"><div><p class="eyebrow">SHA-256 coin tracker</p><h1>Block odds</h1><p>Switch between live BTC, BCH, BSV, XEC, DigiByte SHA-256, and Cheetahcoin network snapshots.</p></div><a class="button-link" href="/settings#odds-settings" data-link>Data settings</a></div>
+      <div id="odds-filters" class="filter-row odds-filters"></div>
       <div id="odds-content" class="odds-grid"></div>
     </section>
 
@@ -159,13 +160,21 @@
         </section>
 
         <section id="odds-settings" class="settings-card">
-          <div class="settings-card-head"><span class="settings-icon">₿</span><div><h2>Block odds</h2><p>Live price, difficulty, and network hashrate with manual fallbacks.</p></div></div>
+          <div class="settings-card-head"><span class="settings-icon">₿</span><div><h2>SHA-256 coin tracker</h2><p>Live price, difficulty, network hashrate, and fleet block odds with manual fallbacks.</p></div></div>
           <div class="toggle-list">
-            <label class="switch-row"><span><strong>Automatic network data</strong><small>Refresh BTC and BCH about every 10 minutes. Only the current snapshot is kept.</small></span><input name="auto_network_data" type="checkbox" role="switch"></label>
+            <label class="switch-row"><span><strong>Automatic network data</strong><small>Refresh enabled coins about every 10 minutes. Only one current snapshot per coin is kept.</small></span><input name="auto_network_data" type="checkbox" role="switch"></label>
             <label class="switch-row"><span><strong>Bitcoin odds</strong></span><input name="btc_enabled" type="checkbox" role="switch"></label>
             <label><span>BTC fallback hashrate <small>Optional</small></span><div class="input-unit"><input name="manual_btc_network_hashrate_eh" type="number" min="0.001" step="0.001"><em>EH/s</em></div></label>
             <label class="switch-row"><span><strong>Bitcoin Cash odds</strong></span><input name="bch_enabled" type="checkbox" role="switch"></label>
             <label><span>BCH fallback hashrate <small>Optional</small></span><div class="input-unit"><input name="manual_bch_network_hashrate_eh" type="number" min="0.001" step="0.001"><em>EH/s</em></div></label>
+            <label class="switch-row"><span><strong>Bitcoin SV odds</strong></span><input name="bsv_enabled" type="checkbox" role="switch"></label>
+            <label><span>BSV fallback hashrate <small>Optional</small></span><div class="input-unit"><input name="manual_bsv_network_hashrate_eh" type="number" min="0.000000001" step="0.000000001"><em>EH/s</em></div></label>
+            <label class="switch-row"><span><strong>eCash odds</strong></span><input name="xec_enabled" type="checkbox" role="switch"></label>
+            <label><span>XEC fallback hashrate <small>Optional</small></span><div class="input-unit"><input name="manual_xec_network_hashrate_eh" type="number" min="0.000000001" step="0.000000001"><em>EH/s</em></div></label>
+            <label class="switch-row"><span><strong>DigiByte SHA-256 odds</strong><small>Uses the SHA-256 lane only, not DigiByte's other mining algorithms.</small></span><input name="dgb_enabled" type="checkbox" role="switch"></label>
+            <label><span>DGB-SHA fallback hashrate <small>Optional</small></span><div class="input-unit"><input name="manual_dgb_network_hashrate_eh" type="number" min="0.000000001" step="0.000000001"><em>EH/s</em></div></label>
+            <label class="switch-row"><span><strong>Cheetahcoin odds</strong><small>CHTA uses CEA/RandomSpike; displayed odds are a live estimate, not a promise.</small></span><input name="chta_enabled" type="checkbox" role="switch"></label>
+            <label><span>CHTA fallback hashrate <small>Optional</small></span><div class="input-unit"><input name="manual_chta_network_hashrate_eh" type="number" min="0.000000001" step="0.000000001"><em>EH/s</em></div></label>
           </div>
         </section>
 

@@ -24,6 +24,12 @@ def normalize_config(value: dict):
     config["app"].setdefault("lan_access_enabled", False)
     config["app"].setdefault("offline_alert_grace_seconds", 60)
     config["odds"].setdefault("auto_network_data", True)
+    config["odds"].setdefault("btc_enabled", True)
+    config["odds"].setdefault("bch_enabled", True)
+    config["odds"].setdefault("bsv_enabled", True)
+    config["odds"].setdefault("xec_enabled", True)
+    config["odds"].setdefault("dgb_enabled", True)
+    config["odds"].setdefault("chta_enabled", True)
     discord_defaults = {
         "send_offline_alerts": True,
         "send_recovery_alerts": True,
