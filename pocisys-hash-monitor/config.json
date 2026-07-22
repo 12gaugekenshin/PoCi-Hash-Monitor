@@ -19,6 +19,7 @@
     "send_recovery_alerts": true,
     "send_hashrate_alerts": true,
     "send_temperature_alerts": true,
+    "send_chip_health_alerts": true,
     "send_best_diff_alerts": true,
     "send_block_found_alerts": true,
     "send_pool_alerts": true,

@@ -7,6 +7,9 @@ from datetime import datetime, timezone
 from .discord import DiscordWebhook
 
 
+NERDQAXE_OFFLINE_GRACE_SECONDS = 180
+
+
 def _difficulty_number(value):
     if value is None:
         return None
@@ -125,6 +128,11 @@ class AlertEngine:
         now = time.monotonic()
         offline_since = None
         offline_alerted = False
+        miner_type = str(status.get("type") or miner_config.get("type") or "").strip().lower()
+        offline_grace = max(
+            self.offline_grace,
+            NERDQAXE_OFFLINE_GRACE_SECONDS if miner_type in {"nerdaxe", "nerdqaxe"} else 0,
+        )
 
         if not online:
             offline_since = (
@@ -135,9 +143,9 @@ class AlertEngine:
             offline_alerted = bool(prior.get("offline_alerted")) if prior else False
             offline_for = max(0, now - offline_since)
             status["offline_for_seconds"] = round(offline_for, 1)
-            if offline_for < self.offline_grace:
+            if offline_for < offline_grace:
                 status["warnings"].append(
-                    f"Offline grace period ({int(self.offline_grace - offline_for)}s remaining)"
+                    f"Offline grace period ({int(offline_grace - offline_for)}s remaining)"
                 )
             elif discord.get("send_offline_alerts", True):
                 sent = await self.emit(
@@ -196,6 +204,55 @@ class AlertEngine:
                         f"{miner_key}:temp-warning", "TEMP Temperature Warning",
                         f"{name}\nCurrent: {highest:g} C", "warning", name, url=miner_url,
                     )
+
+            chip_health = status.get("chip_health") or {}
+            chip_items = chip_health.get("items") or []
+            chip_health_reported = bool(chip_health.get("reported") and chip_items)
+            chip_health_degraded = chip_health_reported and (
+                any(str(item.get("status") or "").lower() != "healthy" for item in chip_items)
+                or (
+                    chip_health.get("healthy") is not None
+                    and chip_health.get("total") is not None
+                    and chip_health.get("healthy") < chip_health.get("total")
+                )
+            )
+            previous_chip_degraded = prior.get("chip_health_degraded") if prior else False
+            if (
+                miner_type == "luxos"
+                and chip_health_degraded
+                and not previous_chip_degraded
+                and discord.get("send_chip_health_alerts", True)
+            ):
+                affected = []
+                for item in chip_items:
+                    if str(item.get("status") or "").lower() == "healthy":
+                        continue
+                    healthy = item.get("chips_healthy")
+                    total = item.get("chips_total")
+                    count = f" ({healthy}/{total} ASICs)" if healthy is not None and total is not None else ""
+                    affected.append(f"{item.get('name') or 'Hashboard'}: {item.get('status') or 'warning'}{count}")
+                detail = "\n".join(affected[:8]) or "LuxOS reported fewer healthy hashboards than expected."
+                status["warnings"].append("LuxOS chip health degraded")
+                await self.emit(
+                    f"{miner_key}:chip-health",
+                    "WARN LuxOS Chip Health Low",
+                    f"{name}\n{detail}\nA board restart may be required if the fault persists.",
+                    "warning", name, True, miner_url,
+                )
+            elif (
+                miner_type == "luxos"
+                and chip_health_reported
+                and not chip_health_degraded
+                and previous_chip_degraded
+                and discord.get("send_chip_health_alerts", True)
+                and discord.get("send_recovery_alerts", True)
+            ):
+                await self.emit(
+                    f"{miner_key}:chip-health-recovered",
+                    "LuxOS Chip Health Recovered",
+                    f"{name}\nAll {chip_health.get('total')} reported hashboards are healthy.",
+                    "success", name, True, miner_url,
+                )
 
             pool = status.get("pool", {})
             pool_identity = (pool.get("url"), pool.get("source"))
@@ -268,6 +325,22 @@ class AlertEngine:
             "blocks_found": int(status.get("blocks_found") or 0),
             "offline_since": offline_since,
             "offline_alerted": offline_alerted,
+            "chip_health_degraded": bool(
+                online
+                and status.get("chip_health", {}).get("reported")
+                and (
+                    any(
+                        str(item.get("status") or "").lower() != "healthy"
+                        for item in status.get("chip_health", {}).get("items", [])
+                    )
+                    or (
+                        status.get("chip_health", {}).get("healthy") is not None
+                        and status.get("chip_health", {}).get("total") is not None
+                        and status.get("chip_health", {}).get("healthy")
+                        < status.get("chip_health", {}).get("total")
+                    )
+                )
+            ),
         }
 
     async def pool_event(self, event: dict):

@@ -200,6 +200,7 @@ def current_settings():
         "send_recovery_alerts": discord.get("send_recovery_alerts", True),
         "send_hashrate_alerts": discord.get("send_hashrate_alerts", True),
         "send_temperature_alerts": discord.get("send_temperature_alerts", True),
+        "send_chip_health_alerts": discord.get("send_chip_health_alerts", True),
         "send_best_diff_alerts": discord.get("send_best_diff_alerts", True),
         "send_block_found_alerts": discord.get("send_block_found_alerts", True),
         "send_pool_alerts": discord.get("send_pool_alerts", True),
@@ -258,7 +259,7 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.4.26"}
+        return {"ok": True, "version": "1.4.27"}
     if method == "GET" and path == "/api/status":
         try:
             pool_statuses = pool_logs.status()
@@ -476,6 +477,7 @@ async def api_dispatch(method, path, data):
                 send_recovery_alerts=bool(data.get("send_recovery_alerts", True)),
                 send_hashrate_alerts=bool(data.get("send_hashrate_alerts", True)),
                 send_temperature_alerts=bool(data.get("send_temperature_alerts", True)),
+                send_chip_health_alerts=bool(data.get("send_chip_health_alerts", True)),
                 send_best_diff_alerts=bool(data.get("send_best_diff_alerts", True)),
                 send_block_found_alerts=bool(data.get("send_block_found_alerts", True)),
                 send_pool_alerts=bool(data.get("send_pool_alerts", True)),
@@ -552,7 +554,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.4.26"
+    server_version = "PoCiSys/1.4.27"
     protocol_version = "HTTP/1.1"
 
     def log_message(self, _format, *_args):
@@ -676,7 +678,7 @@ def shutdown_services():
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.4.26 starting", flush=True)
+    print("PoCiSys Hash Monitor 1.4.27 starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()

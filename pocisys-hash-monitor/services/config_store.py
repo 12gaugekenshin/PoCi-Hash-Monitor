@@ -35,6 +35,7 @@ def normalize_config(value: dict):
         "send_recovery_alerts": True,
         "send_hashrate_alerts": True,
         "send_temperature_alerts": True,
+        "send_chip_health_alerts": True,
         "send_best_diff_alerts": True,
         "send_block_found_alerts": True,
         "send_pool_alerts": True,

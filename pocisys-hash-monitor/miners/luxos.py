@@ -116,9 +116,12 @@ class LuxOSDriver(MinerDriver):
             good_chips = symbols.count("o") if symbols else integer(stats.get(f"chain_acn{chain}"), None)
             total_chips = len(symbols) if symbols else integer(stats.get(f"chain_acn{chain}"), None)
             device_status = str(device.get("Status") or "unknown")
+            chain_faults = _positive_values(stats, rf"chain_hw{chain}")
+            missing_chips = good_chips is not None and total_chips is not None and good_chips < total_chips
+            healthy = device_status.lower() == "alive" and not chain_faults and not missing_chips
             chip_items.append({
                 "name": f"Hashboard {chain}",
-                "status": "healthy" if device_status.lower() == "alive" and not _positive_values(stats, rf"chain_hw{chain}") else "warning",
+                "status": "healthy" if healthy else "warning",
                 "chips_healthy": good_chips,
                 "chips_total": total_chips,
                 "temperature_c": number(device.get("Temperature")),
