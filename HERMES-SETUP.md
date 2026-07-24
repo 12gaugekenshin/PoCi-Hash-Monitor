@@ -1,6 +1,6 @@
 # Connect PoCiSys Hash Monitor to Hermes
 
-PoCiSys 1.5.0 exposes a small authenticated MCP endpoint for read-only mining
+PoCiSys 1.5.1 exposes a small authenticated MCP endpoint for read-only mining
 and Umbrel telemetry.
 
 ## 1. Generate a PoCiSys connection token

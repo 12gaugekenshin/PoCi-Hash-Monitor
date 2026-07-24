@@ -2,7 +2,7 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.5.0"
+version: "1.5.1"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/main/pocisys-hash-monitor/icon.svg
 description: >-
@@ -33,10 +33,10 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Adds authenticated, read-only Hermes MCP support for miner telemetry, Public
-  Pool status, SHA-256 block odds, and container-visible Umbrel CPU, RAM, disk,
-  load, and uptime metrics. Connection tokens are stored only as hashes, and
-  no control or configuration tools are exposed.
+  Fixes intermittent 502 errors on Umbrel systems that also run Public Pool by
+  routing the app proxy through PoCiSys's unique Docker network alias. Includes
+  authenticated, read-only Hermes MCP access for miner, pool, odds, and
+  container-visible system telemetry.
 dependencies: []
 path: ""
 defaultUsername: ""

@@ -8,7 +8,7 @@ Add this Community App Store URL in Umbrel:
 https://github.com/12gaugekenshin/PoCi-Hash-Monitor
 ```
 
-Version 1.5.0 uses the public multi-architecture Python image. The container
+Version 1.5.1 uses the public multi-architecture Python image. The container
 downloads this repository's app source at startup and runs it from `/tmp`, so
 Umbrel only persists `/data/config.json`. It does not require GitHub Actions,
 pip installs, bind-mounted repo files, or a custom container package. Config
@@ -21,6 +21,10 @@ odds, and container-visible Umbrel host CPU, RAM, disk, load, and uptime
 metrics. PoCiSys exposes no miner controls, shell execution, wallet data, or
 configuration tools through MCP. Connection tokens are shown once and stored
 only as SHA-256 digests.
+
+Version 1.5.1 also fixes intermittent `502` errors on Umbrel systems running
+Public Pool. PoCiSys now targets its unique Docker network alias instead of the
+shared, ambiguous `server` hostname.
 
 See [HERMES-SETUP.md](HERMES-SETUP.md) for the connection steps.
 

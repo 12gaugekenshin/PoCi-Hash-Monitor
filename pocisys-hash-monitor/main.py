@@ -31,7 +31,7 @@ from services.pool_probe import PoolConnectionProbe, PoolProbeCooldown
 from services.system_stats import SystemStatsService
 
 
-APP_VERSION = "1.5.0"
+APP_VERSION = "1.5.1"
 ROOT = Path(__file__).resolve().parent
 WEB_ROOT = ROOT / "web"
 CONFIG_PATH = Path(os.environ.get("POCISYS_CONFIG_PATH", ROOT / "config.json")).resolve()

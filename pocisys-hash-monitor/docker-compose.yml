@@ -3,7 +3,10 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: server
+      # umbrel_main_network is shared by installed apps. A generic "server"
+      # hostname also resolves to Public Pool's backend, causing requests to
+      # randomly hit the wrong container. Target PoCiSys's unique alias.
+      APP_HOST: pocisys-hash-monitor_server_1
       APP_PORT: 8765
       PROXY_AUTH_ADD: "false"
 
