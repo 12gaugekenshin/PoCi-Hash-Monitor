@@ -8,17 +8,21 @@ Add this Community App Store URL in Umbrel:
 https://github.com/12gaugekenshin/PoCi-Hash-Monitor
 ```
 
-Version 1.4.27 uses the public multi-architecture Python image. The container
+Version 1.5.0 uses the public multi-architecture Python image. The container
 downloads this repository's app source at startup and runs it from `/tmp`, so
 Umbrel only persists `/data/config.json`. It does not require GitHub Actions,
 pip installs, bind-mounted repo files, or a custom container package. Config
 saves use a simple direct JSON write for maximum UmbrelOS compatibility, and
 a tiny supervisor restarts the backend if it ever exits unexpectedly.
 
-The latest release gives NerdQaxe devices a three-minute reconnect grace period
-before an offline alert and adds transition-based Discord alerts when LuxOS
-reports degraded chip or hashboard health. Persistent faults do not generate a
-message every polling cycle, and a recovery notice is sent when health clears.
+The latest release adds authenticated, read-only Hermes MCP support. Hermes can
+query current miner health, Public Pool workers and hashrate, SHA-256 block
+odds, and container-visible Umbrel host CPU, RAM, disk, load, and uptime
+metrics. PoCiSys exposes no miner controls, shell execution, wallet data, or
+configuration tools through MCP. Connection tokens are shown once and stored
+only as SHA-256 digests.
+
+See [HERMES-SETUP.md](HERMES-SETUP.md) for the connection steps.
 
 Built by [12GaugeKenshin](https://github.com/12gaugekenshin).
 

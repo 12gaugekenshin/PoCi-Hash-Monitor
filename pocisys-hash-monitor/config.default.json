@@ -27,6 +27,11 @@
     "send_share_alerts": true,
     "verbose_pool_events": false
   },
+  "hermes": {
+    "enabled": false,
+    "token_hash": "",
+    "token_hint": ""
+  },
   "odds": {
     "btc_enabled": true,
     "bch_enabled": true,

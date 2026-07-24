@@ -46,6 +46,10 @@ const DEFAULT_SETTINGS = {
   lan_access_enabled: false,
   discord_enabled: false,
   webhook_configured: false,
+  hermes_enabled: false,
+  hermes_token_configured: false,
+  hermes_token_hint: "",
+  hermes_mcp_path: "/mcp",
   send_offline_alerts: true,
   send_recovery_alerts: true,
   send_hashrate_alerts: true,
@@ -892,6 +896,11 @@ function fillSettings() {
     else field.value = value ?? "";
   }
   $("#webhook-state").textContent = settings.webhook_configured ? "A webhook is configured and hidden." : "No webhook configured.";
+  const mcpPath = settings.hermes_mcp_path || "/mcp";
+  $("#hermes-mcp-url").value = `${location.origin}${mcpPath}`;
+  $("#hermes-token-state").textContent = settings.hermes_token_configured
+    ? `Connection token configured · ends in ${settings.hermes_token_hint || "••••••"}`
+    : "No connection token configured.";
 }
 
 function setFormValue(form, name, value) {
@@ -1021,6 +1030,53 @@ async function resumeAlerts() {
   toast("Routine Discord alerts resumed.", "success");
 }
 
+async function generateHermesToken(button) {
+  const replacing = Boolean(settings?.hermes_token_configured);
+  if (replacing && !confirm("Rotate the Hermes connection token? The existing Hermes connection will stop working until its saved token is updated.")) return;
+  button.disabled = true;
+  try {
+    const result = await request("/api/hermes/token", {method: "POST"});
+    $("#hermes-token-value").value = result.token;
+    $("#hermes-token-result").hidden = false;
+    settings = await request("/api/settings");
+    fillSettings();
+    toast("Hermes token generated. Copy it now; it cannot be revealed again.", "success");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function copyHermesToken(button) {
+  const token = $("#hermes-token-value").value;
+  if (!token) {
+    toast("Generate a Hermes token first.", "warning");
+    return;
+  }
+  await navigator.clipboard.writeText(token);
+  const original = button.textContent;
+  button.textContent = "Copied";
+  setTimeout(() => { button.textContent = original; }, 1200);
+}
+
+async function revokeHermesToken(button) {
+  if (!settings?.hermes_token_configured) {
+    toast("No Hermes token is configured.", "warning");
+    return;
+  }
+  if (!confirm("Revoke the Hermes connection token and disable Hermes access?")) return;
+  button.disabled = true;
+  try {
+    const result = await request("/api/hermes/token", {method: "DELETE"});
+    settings = result.settings || await request("/api/settings");
+    $("#hermes-token-value").value = "";
+    $("#hermes-token-result").hidden = true;
+    fillSettings();
+    toast("Hermes access revoked.", "success");
+  } finally {
+    button.disabled = false;
+  }
+}
+
 document.addEventListener("click", async event => {
   if (suppressNextClick || window.getSelection()?.toString()) {
     suppressNextClick = false;
@@ -1058,6 +1114,9 @@ document.addEventListener("click", async event => {
     if (action === "clear-alerts") await clearRecentAlerts(target);
     if (action === "snooze-alerts") await setAlertSnooze(Number(target.dataset.seconds));
     if (action === "resume-alerts") await resumeAlerts();
+    if (action === "generate-hermes-token") await generateHermesToken(target);
+    if (action === "copy-hermes-token") await copyHermesToken(target);
+    if (action === "revoke-hermes-token") await revokeHermesToken(target);
     if (action === "test-external-pool") await testExternalPool();
     if (action === "toggle-ip-privacy") {
       setIpPrivacy(!hideIps);
@@ -1193,6 +1252,7 @@ $("#settings-form").addEventListener("submit", async event => {
     send_pool_switch_alerts: form.elements.send_pool_switch_alerts.checked,
     send_share_alerts: form.elements.send_share_alerts.checked,
     verbose_pool_events: form.elements.verbose_pool_events.checked,
+    hermes_enabled: form.elements.hermes_enabled.checked,
     btc_enabled: form.elements.btc_enabled.checked,
     bch_enabled: form.elements.bch_enabled.checked,
     bsv_enabled: form.elements.bsv_enabled.checked,

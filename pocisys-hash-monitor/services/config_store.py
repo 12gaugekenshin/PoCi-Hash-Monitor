@@ -18,11 +18,15 @@ def normalize_config(value: dict):
     config.setdefault("pools", [])
     config.setdefault("discord", {})
     config.setdefault("odds", {})
+    config.setdefault("hermes", {})
     config["app"].setdefault("dashboard_density", "comfortable")
     config["app"].setdefault("difficulty_rain_enabled", True)
     config["app"].setdefault("dashboard_base_url", "")
     config["app"].setdefault("lan_access_enabled", False)
     config["app"].setdefault("offline_alert_grace_seconds", 60)
+    config["hermes"].setdefault("enabled", False)
+    config["hermes"].setdefault("token_hash", "")
+    config["hermes"].setdefault("token_hint", "")
     config["odds"].setdefault("auto_network_data", True)
     config["odds"].setdefault("btc_enabled", True)
     config["odds"].setdefault("bch_enabled", True)
@@ -88,7 +92,7 @@ def save_config(path: Path, config: dict):
 
 def apply_in_place(target: dict, updated: dict):
     """Preserve service references while applying a newly validated config."""
-    for section in ("app", "discord", "odds"):
+    for section in ("app", "discord", "odds", "hermes"):
         current = target.setdefault(section, {})
         current.clear()
         current.update(deepcopy(updated.get(section, {})))
@@ -101,4 +105,6 @@ def public_config(config: dict):
     safe = deepcopy(config)
     if safe.get("discord", {}).get("webhook_url"):
         safe["discord"]["webhook_url"] = "configured (hidden)"
+    if safe.get("hermes", {}).get("token_hash"):
+        safe["hermes"]["token_hash"] = "configured (hidden)"
     return safe

@@ -2,7 +2,7 @@ manifestVersion: 1
 id: pocisys-hash-monitor
 category: bitcoin
 name: PoCiSys Hash Monitor
-version: "1.4.27"
+version: "1.5.0"
 tagline: Read-only monitoring for your SHA-256 miner fleet
 icon: https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/main/pocisys-hash-monitor/icon.svg
 description: >-
@@ -20,7 +20,8 @@ description: >-
 
   PoCiSys never changes miner settings. It stores only its small config.json
   file and keeps current telemetry in bounded memory with no database or
-  long-term hashrate history.
+  long-term hashrate history. Its optional authenticated Hermes MCP endpoint
+  exposes only read-only host, miner, pool, and block-odds telemetry.
 developer: PoCiSys
 website: https://pocisys.io/
 submitter: 12gaugekenshin
@@ -32,8 +33,10 @@ gallery:
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/1.png
   - https://raw.githubusercontent.com/12gaugekenshin/PoCi-Hash-Monitor/HEAD/pocisys-hash-monitor/2.png
 releaseNotes: >-
-  Adds a three-minute NerdQaxe reconnect grace period and transition-based
-  Discord alerts when LuxOS reports degraded chip or hashboard health.
+  Adds authenticated, read-only Hermes MCP support for miner telemetry, Public
+  Pool status, SHA-256 block odds, and container-visible Umbrel CPU, RAM, disk,
+  load, and uptime metrics. Connection tokens are stored only as hashes, and
+  no control or configuration tools are exposed.
 dependencies: []
 path: ""
 defaultUsername: ""

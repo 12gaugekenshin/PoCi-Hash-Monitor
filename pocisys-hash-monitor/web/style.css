@@ -700,6 +700,29 @@ body.screen-active .cat-watermark img { opacity: .22; }
 .screen-row.alert { grid-template-columns: 56px 1fr; align-items: start; }
 .screen-empty { display: grid; gap: 5px; padding: 22px; color: #718096; }
 .screen-empty strong { color: #d2deea; }
+.hermes-settings-card { border-color: rgba(92, 205, 194, .26); }
+.hermes-color { color: #73ded2; background: rgba(70, 191, 181, .12); }
+.hermes-token-state {
+  display: grid;
+  gap: 5px;
+  padding: 14px 15px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: rgba(70, 191, 181, .045);
+}
+.hermes-token-state strong { color: var(--text); font-size: 13px; }
+.hermes-token-state small { color: var(--muted); line-height: 1.45; }
+.hermes-token-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  padding-top: 13px;
+}
+.hermes-token-result[hidden] { display: none; }
+.hermes-token-result label { min-width: 0; }
+.hermes-token-result input { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+.hermes-actions { display: flex; flex-wrap: wrap; gap: 9px; padding-top: 13px; }
 
 @keyframes screenBreathe {
   from { filter: brightness(.92) saturate(.88); }

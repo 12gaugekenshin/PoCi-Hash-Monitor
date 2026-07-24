@@ -169,6 +169,25 @@
           <button type="button" data-action="test-discord">Send test message</button>
         </section>
 
+        <section class="settings-card hermes-settings-card">
+          <div class="settings-card-head"><span class="settings-icon hermes-color">H</span><div><h2>Hermes AI access</h2><p>Give Hermes a read-only view of this dashboard's current telemetry.</p></div></div>
+          <label class="switch-row"><span><strong>Enable Hermes MCP</strong><small>Requires a connection token. No miner controls or configuration routes are exposed.</small></span><input name="hermes_enabled" type="checkbox" role="switch"></label>
+          <label><span>MCP endpoint</span><input id="hermes-mcp-url" type="text" readonly value="/mcp"><small>Use this URL when adding PoCiSys as an HTTP MCP server in Hermes.</small></label>
+          <div class="hermes-token-state">
+            <strong id="hermes-token-state">No connection token configured.</strong>
+            <small>Tokens are shown only when generated. PoCiSys stores a SHA-256 digest, not the reusable token.</small>
+          </div>
+          <div id="hermes-token-result" class="hermes-token-result" hidden>
+            <label><span>New connection token</span><input id="hermes-token-value" type="password" readonly autocomplete="off"></label>
+            <button type="button" data-action="copy-hermes-token">Copy token</button>
+          </div>
+          <div class="hermes-actions">
+            <button type="button" data-action="generate-hermes-token">Generate / rotate token</button>
+            <button class="danger-text" type="button" data-action="revoke-hermes-token">Revoke token</button>
+          </div>
+          <p class="settings-explainer">Available tools: system health, fleet overview, miner telemetry, Public Pool status, and block odds. Every tool is read-only and accepts only bounded lookup parameters.</p>
+        </section>
+
         <section id="odds-settings" class="settings-card">
           <div class="settings-card-head"><span class="settings-icon">₿</span><div><h2>SHA-256 coin tracker</h2><p>Live price, difficulty, network hashrate, and fleet block odds with manual fallbacks.</p></div></div>
           <div class="toggle-list">

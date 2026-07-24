@@ -15,13 +15,23 @@ from pathlib import Path
 from miners import get_driver
 from services.alerts import AlertEngine
 from services.config_store import apply_in_place, load_config, make_id, public_config, save_config
+from services.hermes_mcp import (
+    HermesMcpService,
+    create_connection_token,
+    sanitize_miner,
+    sanitize_pool,
+    token_digest,
+    token_matches,
+)
 from services.network_data import NetworkDataService
 from services.odds import calculate_odds
 from services.poller import MinerPoller
 from services.pool_logs import PoolLogService, probe_public_pool
 from services.pool_probe import PoolConnectionProbe, PoolProbeCooldown
+from services.system_stats import SystemStatsService
 
 
+APP_VERSION = "1.5.0"
 ROOT = Path(__file__).resolve().parent
 WEB_ROOT = ROOT / "web"
 CONFIG_PATH = Path(os.environ.get("POCISYS_CONFIG_PATH", ROOT / "config.json")).resolve()
@@ -134,6 +144,7 @@ poller = MinerPoller(config, alerts)
 pool_logs = PoolLogService(config.get("pools", []), alerts, poller.statuses)
 network_data = NetworkDataService()
 pool_probe = PoolConnectionProbe()
+system_stats = SystemStatsService()
 config_lock = asyncio.Lock()
 
 
@@ -183,6 +194,7 @@ def summary():
 def current_settings():
     app_config = config.get("app", {})
     discord = config.get("discord", {})
+    hermes = config.get("hermes", {})
     odds = config.get("odds", {})
     return {
         "poll_interval_seconds": app_config.get("poll_interval_seconds", 10),
@@ -207,6 +219,10 @@ def current_settings():
         "send_pool_switch_alerts": discord.get("send_pool_switch_alerts", True),
         "send_share_alerts": discord.get("send_share_alerts", True),
         "verbose_pool_events": discord.get("verbose_pool_events", False),
+        "hermes_enabled": hermes.get("enabled", False),
+        "hermes_token_configured": bool(hermes.get("token_hash")),
+        "hermes_token_hint": hermes.get("token_hint", ""),
+        "hermes_mcp_path": "/mcp",
         "btc_enabled": odds.get("btc_enabled", True),
         "bch_enabled": odds.get("bch_enabled", True),
         "bsv_enabled": odds.get("bsv_enabled", True),
@@ -221,6 +237,69 @@ def current_settings():
         "manual_dgb_network_hashrate_eh": odds.get("manual_dgb_network_hashrate_eh"),
         "manual_chta_network_hashrate_eh": odds.get("manual_chta_network_hashrate_eh"),
     }
+
+
+def pool_statuses():
+    try:
+        return pool_logs.status()
+    except Exception as exc:
+        print(f"PoCiSys warning: pool status failed for Hermes: {exc}", flush=True)
+        return []
+
+
+def hermes_miners():
+    return [sanitize_miner(item) for item in poller.statuses()]
+
+
+def hermes_pools():
+    return [sanitize_pool(item) for item in pool_statuses()]
+
+
+def odds_status():
+    return calculate_odds(poller.statuses(), config, network_data.snapshot())
+
+
+def hermes_overview():
+    miners = hermes_miners()
+    pools = hermes_pools()
+    return {
+        "app": {
+            "name": "PoCiSys Hash Monitor",
+            "version": APP_VERSION,
+            "health": "ok",
+            "last_poll": poller.last_poll,
+        },
+        "system": system_stats.snapshot(),
+        "summary": summary(),
+        "miners": [
+            {
+                "id": item.get("id"),
+                "name": item.get("name"),
+                "group": item.get("group"),
+                "online": item.get("online"),
+                "api_ok": item.get("api_ok"),
+                "status": item.get("status"),
+                "hashrate_ths": item.get("hashrate_ths"),
+                "highest_temperature_c": max(
+                    (value for value in item.get("temps", {}).values() if value is not None),
+                    default=None,
+                ),
+                "warnings": item.get("warnings", []),
+            }
+            for item in miners
+        ],
+        "pools": pools,
+    }
+
+
+hermes_mcp = HermesMcpService(
+    version=APP_VERSION,
+    overview_provider=hermes_overview,
+    miners_provider=hermes_miners,
+    pools_provider=hermes_pools,
+    odds_provider=odds_status,
+    system_provider=system_stats.snapshot,
+)
 
 
 async def discover_public_pool(host=None):
@@ -259,7 +338,9 @@ async def api_dispatch(method, path, data):
     statuses = poller.statuses()
 
     if method == "GET" and path == "/health":
-        return {"ok": True, "version": "1.4.27"}
+        return {"ok": True, "version": APP_VERSION}
+    if method == "GET" and path == "/api/system-health":
+        return {"system": system_stats.snapshot()}
     if method == "GET" and path == "/api/status":
         try:
             pool_statuses = pool_logs.status()
@@ -439,6 +520,29 @@ async def api_dispatch(method, path, data):
         return public_config(config)
     if method == "GET" and path == "/api/settings":
         return current_settings()
+    if method == "POST" and path == "/api/hermes/token":
+        async with config_lock:
+            token = create_connection_token()
+            updated = deepcopy(config)
+            updated.setdefault("hermes", {})
+            updated["hermes"]["token_hash"] = token_digest(token)
+            updated["hermes"]["token_hint"] = token[-6:]
+            commit_config(updated)
+        return {
+            "ok": True,
+            "token": token,
+            "token_hint": token[-6:],
+            "message": "Copy this token now. PoCiSys stores only its hash and cannot reveal it again.",
+        }
+    if method == "DELETE" and path == "/api/hermes/token":
+        async with config_lock:
+            updated = deepcopy(config)
+            updated.setdefault("hermes", {})
+            updated["hermes"]["enabled"] = False
+            updated["hermes"]["token_hash"] = ""
+            updated["hermes"]["token_hint"] = ""
+            commit_config(updated)
+        return {"ok": True, "settings": current_settings()}
     if method == "PUT" and path == "/api/settings":
         async with config_lock:
             updated = deepcopy(config)
@@ -485,6 +589,10 @@ async def api_dispatch(method, path, data):
                 send_share_alerts=bool(data.get("send_share_alerts", True)),
                 verbose_pool_events=bool(data.get("verbose_pool_events", False)),
             )
+            hermes = updated.setdefault("hermes", {})
+            hermes["enabled"] = bool(data.get("hermes_enabled", False))
+            if hermes["enabled"] and not hermes.get("token_hash"):
+                raise ApiError(400, "Generate a Hermes connection token before enabling AI access")
             if webhook:
                 discord["webhook_url"] = webhook
             elif data.get("clear_webhook"):
@@ -554,7 +662,7 @@ def run_api(method, path, data=None):
 
 
 class PoCiSysHandler(BaseHTTPRequestHandler):
-    server_version = "PoCiSys/1.4.27"
+    server_version = f"PoCiSys/{APP_VERSION}"
     protocol_version = "HTTP/1.1"
 
     def log_message(self, _format, *_args):
@@ -570,6 +678,14 @@ class PoCiSysHandler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
         self.wfile.write(body)
+        self.close_connection = True
+
+    def send_empty(self, status=202):
+        self.send_response(status)
+        self.send_header("Content-Length", "0")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Connection", "close")
+        self.end_headers()
         self.close_connection = True
 
     def read_json(self):
@@ -630,8 +746,30 @@ class PoCiSysHandler(BaseHTTPRequestHandler):
     def dispatch(self, method):
         path = urllib.parse.urlparse(self.path).path.rstrip("/") or "/"
         try:
-            if path.startswith("/api/") or path == "/health":
+            if path.startswith("/api/") or path in {"/health", "/mcp"}:
                 print(f"PoCiSys request: {method} {path}", flush=True)
+            if path == "/mcp":
+                if method != "POST":
+                    raise ApiError(405, "The PoCiSys MCP endpoint accepts POST requests")
+                origin = str(self.headers.get("Origin") or "").strip()
+                if origin:
+                    origin_host = urllib.parse.urlparse(origin).hostname
+                    request_host = urllib.parse.urlparse(f"//{self.headers.get('Host', '')}").hostname
+                    if not origin_host or not request_host or origin_host.casefold() != request_host.casefold():
+                        raise ApiError(403, "Cross-origin MCP requests are not allowed")
+                hermes_config = config.get("hermes", {})
+                if not hermes_config.get("enabled"):
+                    raise ApiError(503, "Hermes access is disabled in PoCiSys settings")
+                authorization = str(self.headers.get("Authorization") or "")
+                scheme, _, bearer = authorization.partition(" ")
+                if scheme.lower() != "bearer" or not token_matches(bearer.strip(), hermes_config.get("token_hash", "")):
+                    raise ApiError(401, "Valid PoCiSys bearer token required")
+                response = hermes_mcp.handle(self.read_json())
+                if response is None:
+                    self.send_empty(202)
+                else:
+                    self.send_json(response)
+                return
             if not path.startswith("/api/") and path != "/health":
                 if method != "GET":
                     raise ApiError(405, "Method not allowed")
@@ -674,14 +812,16 @@ def shutdown_services():
     try:
         asyncio.run_coroutine_threadsafe(stop(), event_loop).result(timeout=10)
     finally:
+        system_stats.stop()
         event_loop.call_soon_threadsafe(event_loop.stop)
 
 
 if __name__ == "__main__":
-    print("PoCiSys Hash Monitor 1.4.27 starting", flush=True)
+    print(f"PoCiSys Hash Monitor {APP_VERSION} starting", flush=True)
     print(f"Config path: {CONFIG_PATH}", flush=True)
     thread = threading.Thread(target=run_event_loop, name="pocisys-services", daemon=True)
     thread.start()
+    system_stats.start()
     loop_started.wait(10)
     host = os.environ.get("POCISYS_HOST", "0.0.0.0")
     port = int(os.environ.get("POCISYS_PORT", "8765"))
