@@ -1,51 +1,34 @@
 # PoCiSys Hash Monitor
 
-Complete umbrelOS Community App Store repository.
+PoCiSys Hash Monitor is a lightweight, read-only dashboard for SHA-256 miners.
+It combines hashrate, temperatures, cooling, shares, pool status, network data,
+and optional Discord alerts in one place.
 
-Add this Community App Store URL in Umbrel:
+## Install
 
-```text
-https://github.com/12gaugekenshin/PoCi-Hash-Monitor
-```
+1. Add [12Gauge's PoCiSys Store](https://github.com/12gaugekenshin/12Gauge-Umbrel-Community-Store#add-the-store-to-umbrel) to Umbrel.
+2. Install **PoCiSys Hash Monitor**.
+3. Open **Settings** and add each miner's local IP address.
+4. Save, return to the dashboard, and confirm the miners report online.
 
-Version 1.5.1 uses the public multi-architecture Python image. The container
-downloads this repository's app source at startup and runs it from `/tmp`, so
-Umbrel only persists `/data/config.json`. It does not require GitHub Actions,
-pip installs, bind-mounted repo files, or a custom container package. Config
-saves use a simple direct JSON write for maximum UmbrelOS compatibility, and
-a tiny supervisor restarts the backend if it ever exits unexpectedly.
+Supported telemetry includes AxeOS/NerdAxe-style devices and LuxOS miners.
+PoCiSys reads their status; it does not change miner settings.
 
-The latest release adds authenticated, read-only Hermes MCP support. Hermes can
-query current miner health, Public Pool workers and hashrate, SHA-256 block
-odds, and container-visible Umbrel host CPU, RAM, disk, load, and uptime
-metrics. PoCiSys exposes no miner controls, shell execution, wallet data, or
-configuration tools through MCP. Connection tokens are shown once and stored
-only as SHA-256 digests.
+## Optional setup
 
-Version 1.5.1 also fixes intermittent `502` errors on Umbrel systems running
-Public Pool. PoCiSys now targets its unique Docker network alias instead of the
-shared, ambiguous `server` hostname.
+- Add your local Public Pool URL for pool worker and share data.
+- Add a Discord webhook for outage, recovery, temperature, hashrate, pool,
+  share-quality, best-difficulty, and block alerts.
+- Enable the authenticated read-only MCP connection if Hermes should answer
+  questions about local miner, pool, block-odds, or system telemetry.
 
-See [HERMES-SETUP.md](HERMES-SETUP.md) for the connection steps.
+MCP tokens are shown once. Store one somewhere safe before closing the setup
+screen.
 
-Built by [12GaugeKenshin](https://github.com/12gaugekenshin).
+## Storage and privacy
 
-**PoCiSys is building an open, verifiable infrastructure stack for AI auditing
-and cryptocurrency mining.** Its AI auditing system monitors model and agent
-behavior through timing, performance, configuration, and operational signals,
-helping detect drift, tampering, unauthorized changes, and other anomalies
-without exposing private prompts, training data, or proprietary models.
+The app stores only its small configuration file. Current telemetry is kept in
+bounded memory; there is no growing long-term hashrate database. Miner controls,
+wallet data, and shell access are not exposed through MCP.
 
-Alongside it, PoCi Hash Monitor provides lightweight tools for managing mining
-hardware, monitoring pools and nodes, tracking performance, and supporting
-self-hosted BTC, BCH, and KAS infrastructure. Together, these systems create a
-transparent foundation for proving compute integrity across both AI and
-decentralized networks.
-
-- Website: https://pocisys.io/
-- X: https://x.com/12gaugekenshin
-
-## License
-
-PoCiSys Hash Monitor is released under the Apache License, Version 2.0.
-See `LICENSE` and `NOTICE`.
+Source and support: [PoCiSys Hash Monitor on GitHub](https://github.com/12gaugekenshin/PoCi-Hash-Monitor)
