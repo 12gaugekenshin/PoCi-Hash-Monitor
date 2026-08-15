@@ -811,6 +811,8 @@ body.screen-active .cat-watermark img { opacity: .22; }
 .hermes-token-result label { min-width: 0; }
 .hermes-token-result input { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
 .hermes-actions { display: flex; flex-wrap: wrap; gap: 9px; padding-top: 13px; }
+.data-tools-card { border-color: rgba(92, 205, 194, .2); }
+.data-tool-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
 
 @keyframes screenBreathe {
   from { filter: brightness(.92) saturate(.88); }

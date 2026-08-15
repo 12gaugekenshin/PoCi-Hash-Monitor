@@ -15,6 +15,7 @@ from pathlib import Path
 from miners import get_driver
 from services.alerts import AlertEngine
 from services.config_store import apply_in_place, load_config, make_id, public_config, save_config
+from services.config_transfer import make_safe_backup, restore_safe_backup
 from services.hermes_mcp import (
     HermesMcpService,
     create_connection_token,
@@ -474,6 +475,18 @@ async def api_dispatch(method, path, data):
         return public_config(config)
     if method == "GET" and path == "/api/settings":
         return current_settings()
+    if method == "GET" and path == "/api/config-backup":
+        return make_safe_backup(config, APP_VERSION)
+    if method == "POST" and path == "/api/config-restore":
+        async with config_lock:
+            updated = restore_safe_backup(data, config)
+            commit_config(updated)
+        return {
+            "ok": True,
+            "miners": len(updated.get("miners", [])),
+            "pools": len(updated.get("pools", [])),
+            "settings": current_settings(),
+        }
     if method == "POST" and path == "/api/hermes/token":
         async with config_lock:
             token = create_connection_token()

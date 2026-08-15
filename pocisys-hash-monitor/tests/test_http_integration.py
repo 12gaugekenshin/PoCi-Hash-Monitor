@@ -168,6 +168,15 @@ class HttpIntegrationTests(unittest.TestCase):
         self.assertFalse(miner["control_schedule_enabled"])
         self.assertTrue(miner["auto_recover_hashboards"])
 
+    def test_config_backup_and_restore_over_http(self):
+        status, backup = self.request("/api/config-backup")
+        self.assertEqual(status, 200)
+        self.assertTrue(backup["sanitized"])
+        self.assertNotIn("webhook_url", backup["config"]["discord"])
+        status, result = self.request("/api/config-restore", method="POST", body=backup)
+        self.assertEqual(status, 200)
+        self.assertTrue(result["ok"])
+
 
 if __name__ == "__main__":
     unittest.main()

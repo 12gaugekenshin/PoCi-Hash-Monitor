@@ -1124,6 +1124,52 @@ async function resumeAlerts() {
   toast("Routine Discord alerts resumed.", "success");
 }
 
+function downloadJson(filename, payload) {
+  const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function downloadConfigBackup(button) {
+  button.disabled = true;
+  try {
+    const backup = await request("/api/config-backup");
+    const date = new Date().toISOString().slice(0, 10);
+    downloadJson(`pocisys-config-backup-${date}.json`, backup);
+    $("#config-transfer-result").innerHTML = `<strong class="good">Safe backup downloaded</strong><span>Discord and Hermes credentials were excluded.</span>`;
+    toast("Safe configuration backup downloaded.", "success");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function restoreConfigFile(file) {
+  if (!file) return;
+  if (file.size > 1024 * 1024) throw new Error("Backup file must be 1 MB or smaller.");
+  let backup;
+  try {
+    backup = JSON.parse(await file.text());
+  } catch (_error) {
+    throw new Error("Choose a valid PoCiSys JSON backup.");
+  }
+  const imported = backup?.config || backup;
+  const miners = Array.isArray(imported?.miners) ? imported.miners.length : 0;
+  const pools = Array.isArray(imported?.pools) ? imported.pools.length : 0;
+  if (!confirm(`Restore ${miners} miner${miners === 1 ? "" : "s"} and ${pools} pool monitor${pools === 1 ? "" : "s"}? This replaces the current miner and pool lists. Saved Discord and Hermes credentials remain untouched.`)) return;
+  const result = await request("/api/config-restore", {method: "POST", body: backup, retries: 0});
+  settings = result.settings || await request("/api/settings");
+  fillSettings();
+  await Promise.all([loadManagement(), refresh()]);
+  $("#config-transfer-result").innerHTML = `<strong class="good">Backup restored</strong><span>${number(result.miners, 0)} miners · ${number(result.pools, 0)} pool monitors</span>`;
+  toast("Configuration restored and monitoring refreshed.", "success");
+}
+
 async function generateHermesToken(button) {
   const replacing = Boolean(settings?.hermes_token_configured);
   if (replacing && !confirm("Rotate the Hermes connection token? The existing Hermes connection will stop working until its saved token is updated.")) return;
@@ -1235,6 +1281,8 @@ document.addEventListener("click", async event => {
     if (action === "clear-alerts") await clearRecentAlerts(target);
     if (action === "snooze-alerts") await setAlertSnooze(Number(target.dataset.seconds));
     if (action === "resume-alerts") await resumeAlerts();
+    if (action === "download-config-backup") await downloadConfigBackup(target);
+    if (action === "choose-config-restore") $("#config-restore-file").click();
     if (action === "generate-hermes-token") await generateHermesToken(target);
     if (action === "copy-hermes-token") await copyHermesToken(target);
     if (action === "revoke-hermes-token") await revokeHermesToken(target);
@@ -1272,6 +1320,17 @@ document.addEventListener("click", async event => {
   } catch (error) {
     target.disabled = false;
     toast(error.message, "error");
+  }
+});
+
+$("#config-restore-file").addEventListener("change", async event => {
+  const input = event.currentTarget;
+  try {
+    await restoreConfigFile(input.files?.[0]);
+  } catch (error) {
+    toast(error.message, "error");
+  } finally {
+    input.value = "";
   }
 });
 
