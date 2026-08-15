@@ -176,6 +176,10 @@ class HttpIntegrationTests(unittest.TestCase):
         status, result = self.request("/api/config-restore", method="POST", body=backup)
         self.assertEqual(status, 200)
         self.assertTrue(result["ok"])
+        status, diagnostics = self.request("/api/diagnostics")
+        self.assertEqual(status, 200)
+        self.assertEqual(diagnostics["report"]["app"], "PoCiSys Hash Monitor")
+        self.assertIn("limits", diagnostics["report"])
 
 
 if __name__ == "__main__":

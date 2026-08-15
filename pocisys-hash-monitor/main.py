@@ -16,6 +16,7 @@ from miners import get_driver
 from services.alerts import AlertEngine
 from services.config_store import apply_in_place, load_config, make_id, public_config, save_config
 from services.config_transfer import make_safe_backup, restore_safe_backup
+from services.diagnostics import build_diagnostics
 from services.hermes_mcp import (
     HermesMcpService,
     create_connection_token,
@@ -487,6 +488,23 @@ async def api_dispatch(method, path, data):
             "pools": len(updated.get("pools", [])),
             "settings": current_settings(),
         }
+    if method == "GET" and path == "/api/diagnostics":
+        try:
+            live_pools = pool_logs.status()
+        except Exception as exc:
+            live_pools = [{"available": False, "message": f"Pool status unavailable: {exc}"}]
+        return build_diagnostics(
+            app_version=APP_VERSION,
+            config=config,
+            system=system_stats.snapshot(),
+            summary=summary(),
+            miner_statuses=statuses,
+            pool_statuses=live_pools,
+            alert_status=alerts.status(),
+            pool_events=list(pool_logs.events),
+            health_status=health_engine.status(),
+            control_status=luxos_control.status(),
+        )
     if method == "POST" and path == "/api/hermes/token":
         async with config_lock:
             token = create_connection_token()

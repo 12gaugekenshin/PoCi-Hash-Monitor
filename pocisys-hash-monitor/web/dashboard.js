@@ -1149,6 +1149,19 @@ async function downloadConfigBackup(button) {
   }
 }
 
+async function downloadDiagnostics(button) {
+  button.disabled = true;
+  try {
+    const report = await request("/api/diagnostics");
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    downloadJson(`pocisys-diagnostics-${timestamp}.json`, report);
+    $("#config-transfer-result").innerHTML = `<strong class="good">Sanitized diagnostics downloaded</strong><span>Generated from bounded current data; nothing was retained by PoCiSys.</span>`;
+    toast("Sanitized diagnostics downloaded.", "success");
+  } finally {
+    button.disabled = false;
+  }
+}
+
 async function restoreConfigFile(file) {
   if (!file) return;
   if (file.size > 1024 * 1024) throw new Error("Backup file must be 1 MB or smaller.");
@@ -1282,6 +1295,7 @@ document.addEventListener("click", async event => {
     if (action === "snooze-alerts") await setAlertSnooze(Number(target.dataset.seconds));
     if (action === "resume-alerts") await resumeAlerts();
     if (action === "download-config-backup") await downloadConfigBackup(target);
+    if (action === "download-diagnostics") await downloadDiagnostics(target);
     if (action === "choose-config-restore") $("#config-restore-file").click();
     if (action === "generate-hermes-token") await generateHermesToken(target);
     if (action === "copy-hermes-token") await copyHermesToken(target);

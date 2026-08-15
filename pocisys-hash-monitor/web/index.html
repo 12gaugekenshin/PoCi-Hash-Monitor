@@ -232,8 +232,10 @@
           <div class="data-tool-actions">
             <button type="button" data-action="download-config-backup">Download safe backup</button>
             <button type="button" data-action="choose-config-restore">Restore backup</button>
+            <button type="button" data-action="download-diagnostics">Download diagnostics</button>
             <input id="config-restore-file" type="file" accept="application/json,.json" hidden>
           </div>
+          <p class="settings-explainer">Diagnostics are generated only when requested and are never saved by PoCiSys. The report contains bounded current telemetry and recent events with addresses, URLs, wallet fields, tokens, webhooks, log paths, and raw API payloads removed.</p>
           <div id="config-transfer-result" class="test-result"></div>
         </section>
 
