@@ -43,6 +43,7 @@ const DEFAULT_SETTINGS = {
   dashboard_base_url: "",
   lan_access_enabled: false,
   luxos_control_enabled: false,
+  luxos_control_acknowledged: false,
   control_timezone: "auto",
   control_utc_offset_minutes: 0,
   discord_enabled: false,
@@ -930,6 +931,23 @@ function setFormValue(form, name, value) {
   }
 }
 
+function cancelControlSafety() {
+  $("#control-safety-check").checked = false;
+  $("#settings-form").elements.luxos_control_enabled.checked = false;
+  $("#control-safety-dialog").close();
+}
+
+function acceptControlSafety() {
+  if (!$("#control-safety-check").checked) {
+    toast("Check the acknowledgement box before enabling controls.", "warning");
+    return;
+  }
+  settings = {...settings, luxos_control_acknowledged: true};
+  $("#settings-form").elements.luxos_control_enabled.checked = true;
+  $("#control-safety-dialog").close();
+  toast("Safety notice acknowledged. Save settings to enable LuxOS controls.", "success");
+}
+
 function populateLuxosProfileSelect(select, profiles, selectedValue, placeholder) {
   const selected = String(selectedValue || "");
   const rows = [`<option value="">${escapeHtml(placeholder)}</option>`];
@@ -1297,6 +1315,8 @@ document.addEventListener("click", async event => {
     if (action === "download-config-backup") await downloadConfigBackup(target);
     if (action === "download-diagnostics") await downloadDiagnostics(target);
     if (action === "choose-config-restore") $("#config-restore-file").click();
+    if (action === "cancel-control-safety") cancelControlSafety();
+    if (action === "accept-control-safety") acceptControlSafety();
     if (action === "generate-hermes-token") await generateHermesToken(target);
     if (action === "copy-hermes-token") await copyHermesToken(target);
     if (action === "revoke-hermes-token") await revokeHermesToken(target);
@@ -1346,6 +1366,13 @@ $("#config-restore-file").addEventListener("change", async event => {
   } finally {
     input.value = "";
   }
+});
+
+$("#settings-form").elements.luxos_control_enabled.addEventListener("change", event => {
+  if (!event.currentTarget.checked || settings?.luxos_control_acknowledged) return;
+  event.currentTarget.checked = false;
+  $("#control-safety-check").checked = false;
+  $("#control-safety-dialog").showModal();
 });
 
 document.addEventListener("keydown", event => {
@@ -1444,6 +1471,7 @@ $("#settings-form").addEventListener("submit", async event => {
     dashboard_base_url: form.elements.dashboard_base_url.value || null,
     lan_access_enabled: form.elements.lan_access_enabled.checked,
     luxos_control_enabled: form.elements.luxos_control_enabled.checked,
+    luxos_control_acknowledged: Boolean(settings?.luxos_control_acknowledged),
     control_timezone: form.elements.control_timezone.value || "auto",
     control_utc_offset_minutes: Number(form.elements.control_utc_offset_minutes.value || 0),
     discord_enabled: form.elements.discord_enabled.checked,

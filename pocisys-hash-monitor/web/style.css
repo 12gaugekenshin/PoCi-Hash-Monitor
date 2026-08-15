@@ -813,6 +813,9 @@ body.screen-active .cat-watermark img { opacity: .22; }
 .hermes-actions { display: flex; flex-wrap: wrap; gap: 9px; padding-top: 13px; }
 .data-tools-card { border-color: rgba(92, 205, 194, .2); }
 .data-tool-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+.safety-dialog { max-width: 680px; }
+.safety-list { display: grid; gap: 10px; margin: 4px 0 18px; padding-left: 22px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.acknowledgement-row { padding: 14px; border: 1px solid rgba(245,188,70,.34); border-radius: 12px; background: rgba(245,188,70,.05); }
 
 @keyframes screenBreathe {
   from { filter: brightness(.92) saturate(.88); }

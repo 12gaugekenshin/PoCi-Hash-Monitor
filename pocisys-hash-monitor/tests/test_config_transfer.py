@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from services.config_transfer import make_safe_backup, restore_safe_backup
+from services.config_store import normalize_config
 from services.validation import ApiError
 
 
@@ -50,6 +51,12 @@ class ConfigTransferTests(unittest.TestCase):
             restore_safe_backup({"schema_version": 99, "config": {}}, self.config)
         with self.assertRaises(ApiError):
             restore_safe_backup({"config": {"miners": [{}] * 501, "pools": []}}, self.config)
+
+    def test_existing_armed_install_migrates_as_acknowledged(self):
+        migrated = normalize_config({"app": {"luxos_control_enabled": True}})
+        self.assertTrue(migrated["app"]["luxos_control_acknowledged"])
+        fresh = normalize_config({"app": {"luxos_control_enabled": False}})
+        self.assertFalse(fresh["app"]["luxos_control_acknowledged"])
 
 
 if __name__ == "__main__":

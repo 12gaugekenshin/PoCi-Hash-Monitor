@@ -181,6 +181,17 @@ class HttpIntegrationTests(unittest.TestCase):
         self.assertEqual(diagnostics["report"]["app"], "PoCiSys Hash Monitor")
         self.assertIn("limits", diagnostics["report"])
 
+        _, settings = self.request("/api/settings")
+        settings["luxos_control_enabled"] = True
+        settings["luxos_control_acknowledged"] = False
+        with self.assertRaises(urllib.error.HTTPError) as denied:
+            self.request("/api/settings", method="PUT", body=settings)
+        self.assertEqual(denied.exception.code, 400)
+        settings["luxos_control_acknowledged"] = True
+        _, saved = self.request("/api/settings", method="PUT", body=settings)
+        self.assertTrue(saved["settings"]["luxos_control_enabled"])
+        self.assertTrue(saved["settings"]["luxos_control_acknowledged"])
+
 
 if __name__ == "__main__":
     unittest.main()

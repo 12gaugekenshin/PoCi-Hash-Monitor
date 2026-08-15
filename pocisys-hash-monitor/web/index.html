@@ -345,6 +345,22 @@
     </form>
   </dialog>
 
+  <dialog id="control-safety-dialog" class="app-dialog safety-dialog">
+    <form method="dialog">
+      <div class="dialog-head"><div><p class="eyebrow">One-time acknowledgement</p><h2>Before enabling LuxOS controls</h2></div><button class="icon-button" type="button" data-action="cancel-control-safety" aria-label="Close">×</button></div>
+      <div class="dialog-body">
+        <div class="control-warning"><strong>PoCiSys is not a hardware safety system.</strong><span>Telemetry can be delayed, missing, or inaccurate. Automatic profile changes, curtailment, and hashboard recovery depend on network access and LuxOS behavior.</span></div>
+        <ul class="safety-list">
+          <li>I will verify power, cooling, firmware, profiles, and manufacturer limits.</li>
+          <li>I understand emergency restore is best effort and cannot run while the miner, Umbrel, or PoCiSys is unreachable.</li>
+          <li>I accept that optional miner controls are used at my own risk.</li>
+        </ul>
+        <label class="check-row acknowledgement-row"><input id="control-safety-check" type="checkbox"><span>I understand and want to enable LuxOS Control Mode.</span></label>
+      </div>
+      <div class="dialog-actions"><span></span><span></span><button type="button" data-action="cancel-control-safety">Cancel</button><button class="primary" type="button" data-action="accept-control-safety">Acknowledge &amp; enable</button></div>
+    </form>
+  </dialog>
+
   <div id="toast" role="status"></div>
   <script src="/static/formatters.js"></script>
   <script src="/static/dashboard.js"></script>
