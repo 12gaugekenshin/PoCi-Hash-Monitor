@@ -709,7 +709,12 @@ class PoCiSysHandler(BaseHTTPRequestHandler):
         return value
 
     def serve_frontend(self, path):
-        if path.startswith("/static/"):
+        if path in {"/manifest.webmanifest", "/service-worker.js"}:
+            candidate = (WEB_ROOT / path.lstrip("/")).resolve()
+            if not candidate.is_file():
+                self.send_error(404)
+                return
+        elif path.startswith("/static/"):
             relative = path[len("/static/"):]
             candidate = (WEB_ROOT / relative).resolve()
             if not str(candidate).startswith(str(WEB_ROOT.resolve())) or not candidate.is_file():
@@ -718,6 +723,8 @@ class PoCiSysHandler(BaseHTTPRequestHandler):
         else:
             candidate = WEB_ROOT / "index.html"
         content_type = mimetypes.guess_type(candidate.name)[0] or "application/octet-stream"
+        if candidate.suffix == ".webmanifest":
+            content_type = "application/manifest+json"
         if candidate.name == "index.html":
             html = candidate.read_text(encoding="utf-8")
             try:

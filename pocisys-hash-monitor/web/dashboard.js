@@ -15,6 +15,7 @@ let alertSnoozeUntil = 0;
 let pointerStart = null;
 let suppressNextClick = false;
 let hideIps = localStorage.getItem("pocisys-hide-ips") === "true";
+let deferredInstallPrompt = null;
 const difficultyRain = {
   canvas: null,
   ctx: null,
@@ -94,6 +95,42 @@ function oddsHashrate(item) {
   const [value, unit] = compactHashrate(item?.miner_hashrate_ths ?? 0);
   const allocated = ["BTC", "BCH"].includes(String(item?.symbol || "").toUpperCase());
   return `${value} ${unit} ${allocated ? "assigned" : "fleet"}`;
+}
+
+function updatePwaInstallUi() {
+  const help = $("#pwa-install-help");
+  const button = $("#pwa-install-button");
+  if (!help || !button) return;
+  const standalone = window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (standalone) {
+    help.textContent = "PoCiSys is already running as an installed app.";
+    button.hidden = true;
+  } else if (deferredInstallPrompt) {
+    help.textContent = "Install the dashboard for a focused home-screen or desktop experience.";
+    button.hidden = false;
+  } else if (ios) {
+    help.textContent = "On iPhone or iPad, use Share → Add to Home Screen. HTTPS through Tailscale enables the complete PWA experience.";
+    button.hidden = true;
+  } else if (!window.isSecureContext) {
+    help.textContent = "Your browser can save a shortcut, but full PWA installation requires HTTPS (for example, an HTTPS Tailscale address).";
+    button.hidden = true;
+  } else {
+    help.textContent = "Use your browser's Install or Add to Home Screen menu if the install button is not shown.";
+    button.hidden = true;
+  }
+}
+
+async function installPwa() {
+  if (!deferredInstallPrompt) {
+    updatePwaInstallUi();
+    toast("Use your browser menu to add PoCiSys to your device.", "warning");
+    return;
+  }
+  await deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  updatePwaInstallUi();
 }
 
 function collectDifficultyRainValues() {
@@ -1317,6 +1354,7 @@ document.addEventListener("click", async event => {
     if (action === "choose-config-restore") $("#config-restore-file").click();
     if (action === "cancel-control-safety") cancelControlSafety();
     if (action === "accept-control-safety") acceptControlSafety();
+    if (action === "install-pwa") await installPwa();
     if (action === "generate-hermes-token") await generateHermesToken(target);
     if (action === "copy-hermes-token") await copyHermesToken(target);
     if (action === "revoke-hermes-token") await revokeHermesToken(target);
@@ -1555,6 +1593,20 @@ window.addEventListener("resize", () => {
 });
 document.addEventListener("visibilitychange", updateDifficultyRain);
 setIpPrivacy(hideIps);
+window.addEventListener("beforeinstallprompt", event => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  updatePwaInstallUi();
+});
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  updatePwaInstallUi();
+  toast("PoCiSys installed on this device.", "success");
+});
+if ("serviceWorker" in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+}
+updatePwaInstallUi();
 route();
 Promise.all([refresh(), loadManagement(), loadSettings()]).catch(error => toast(error.message, "error"));
 setInterval(refresh, 5000);

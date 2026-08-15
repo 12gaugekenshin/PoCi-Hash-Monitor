@@ -4,7 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#080c12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PoCiSys">
   <title>PoCiSys Hash Monitor</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="192x192" href="/static/pwa-icon-192.png">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -256,6 +261,10 @@
             <a href="https://github.com/12gaugekenshin" target="_blank" rel="noopener noreferrer">GitHub</a>
             <a href="https://pocisys.io/" target="_blank" rel="noopener noreferrer">PoCiSys.io</a>
             <a href="https://x.com/12gaugekenshin" target="_blank" rel="noopener noreferrer">X</a>
+          </div>
+          <div class="pwa-install-card">
+            <div><strong>Use PoCiSys like an app</strong><small id="pwa-install-help">Add this dashboard to your phone or desktop for a focused full-screen view.</small></div>
+            <button id="pwa-install-button" type="button" data-action="install-pwa" hidden>Install PoCiSys</button>
           </div>
         </section>
 

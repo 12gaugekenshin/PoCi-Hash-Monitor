@@ -169,6 +169,9 @@ class HttpIntegrationTests(unittest.TestCase):
         self.assertTrue(miner["auto_recover_hashboards"])
 
     def test_config_backup_and_restore_over_http(self):
+        status, manifest = self.request("/manifest.webmanifest")
+        self.assertEqual(status, 200)
+        self.assertEqual(manifest["name"], "PoCiSys Hash Monitor")
         status, backup = self.request("/api/config-backup")
         self.assertEqual(status, 200)
         self.assertTrue(backup["sanitized"])
