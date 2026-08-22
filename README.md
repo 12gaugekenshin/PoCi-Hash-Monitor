@@ -55,11 +55,11 @@ for hardware damage, overheating, downtime, lost mining revenue, increased power
 costs, data loss, or other direct or indirect damages. Users are responsible for
 verifying power, cooling, firmware, and manufacturer limits.
 
-## Latest release — v1.9.3
+## Latest release — v2.0.0
 
-Shows which worker/device reached each pool's session-best and all-time-best
-accepted-share difficulty. The winning all-time worker label is persisted as
-one bounded metadata field per pool; the ten-share history cap is unchanged.
+Adds per-miner telemetry freshness and a bounded App Self-Health panel with
+current process memory, poll timing, queue utilization, accepted-share counts,
+and configuration size. No CPU, RAM, polling, or queue history is retained.
 
 Source and support: [PoCiSys Hash Monitor on GitHub](https://github.com/12gaugekenshin/PoCi-Hash-Monitor)
 
