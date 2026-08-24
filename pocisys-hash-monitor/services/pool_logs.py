@@ -52,14 +52,18 @@ def _pool_snapshot(base: str, timeout: float = 4.0):
         status = _api_json(f"{base}/api/status", timeout=timeout)
         if isinstance(status, dict) and isinstance(status.get("connection"), dict) and "workers" in status:
             candidates = status.get("candidates") if isinstance(status.get("candidates"), list) else []
+            coin = str(status.get("coin") or "BTC").upper()
             normalized = {
                 "totalHashRate": status.get("totalHashRate"),
                 "blockHeight": status.get("blockHeight"),
                 "totalMiners": status.get("totalMiners"),
+                "networkDifficulty": status.get("networkDifficulty"),
+                "coin": coin,
                 "blocksFound": candidates,
                 "acceptedShares": status.get("acceptedShares") if isinstance(status.get("acceptedShares"), list) else [],
             }
-            return "pocisys_pool_port", normalized, status
+            adapter = "pocisys_bchn_sp" if status.get("apiType") == "pocisys-bchn-sp" or coin == "BCH" else "pocisys_pool_port"
+            return adapter, normalized, status
         errors.append("/api/status returned an unrecognized object")
     except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
         errors.append(str(exc))
@@ -113,8 +117,8 @@ def _normalize_share(item, pool_key):
     difficulty = _difficulty(item.get("difficulty") or item.get("shareDifficulty") or item.get("diff"))
     if difficulty is None:
         return None
-    when = _share_time(item.get("received_at") or item.get("receivedAt") or item.get("time") or item.get("timestamp"))
-    worker = str(item.get("worker") or item.get("clientName") or item.get("miner") or "worker")[:128]
+    when = _share_time(item.get("received_at") or item.get("accepted_at") or item.get("receivedAt") or item.get("time") or item.get("timestamp"))
+    worker = str(item.get("worker") or item.get("worker_name") or item.get("clientName") or item.get("miner") or "worker")[:128]
     fingerprint = str(item.get("header_hash") or item.get("headerHash") or item.get("id") or "")[:128]
     if not fingerprint:
         fingerprint = f"{when.isoformat(timespec='milliseconds')}:{worker}:{difficulty:.12g}"
@@ -238,17 +242,24 @@ class PoolLogService:
             "reset_at": reset_at.isoformat(timespec="seconds"),
         }
 
-    def _network_difficulty(self):
+    def _network_difficulty(self, pool):
         try:
+            key = self._key(pool)
+            live = self.latest.get(key, {})
+            reported = _difficulty(live.get("reported_network_difficulty"))
+            if reported is not None and reported > 0:
+                return reported
+            coin = str(live.get("coin") or pool.get("coin") or "BTC").lower()
             snapshot = self.network_provider() or {}
-            return _difficulty((snapshot.get("btc") or {}).get("difficulty"))
+            return _difficulty((snapshot.get(coin) or {}).get("difficulty"))
         except Exception:
             return None
 
     def _share_summary(self, pool):
         key = self._key(pool)
         shares = sorted(list(self.share_history.get(key, ())), key=lambda item: (item["timestamp_ms"], item["id"]), reverse=True)
-        network_difficulty = self._network_difficulty()
+        network_difficulty = self._network_difficulty(pool)
+        coin = str(self.latest.get(key, {}).get("coin") or pool.get("coin") or "BTC").upper()
         for index, share in enumerate(shares):
             older = shares[index + 1] if index + 1 < len(shares) else None
             share["elapsed_seconds"] = max(0, (share["timestamp_ms"] - older["timestamp_ms"]) / 1000) if older else None
@@ -268,6 +279,7 @@ class PoolLogService:
             "all_time_best_difficulty": self.all_time_best.get(key),
             "all_time_best_worker": self.all_time_best_worker.get(key),
             "network_difficulty": network_difficulty,
+            "coin": coin,
         }
 
     def _pool_status(self, pool):
@@ -390,8 +402,9 @@ class PoolLogService:
             client = {}
             workers = []
             raw_shares = pool_data.get("acceptedShares") if isinstance(pool_data.get("acceptedShares"), list) else []
-            share_feed_available = bool(raw_shares) or adapter == "pocisys_pool_port"
-            if adapter == "pocisys_pool_port" and isinstance(port_status, dict):
+            pocisys_adapter = adapter in {"pocisys_pool_port", "pocisys_bchn_sp"}
+            share_feed_available = bool(raw_shares) or pocisys_adapter
+            if pocisys_adapter and isinstance(port_status, dict):
                 workers = port_status.get("workers", []) if isinstance(port_status.get("workers"), list) else []
                 if not raw_shares:
                     try:
@@ -451,8 +464,10 @@ class PoolLogService:
 
             self.latest[key] = {
                 "available": True,
-                "message": "PoCiSys Public Pool Port connected" if adapter == "pocisys_pool_port" else "Public Pool API connected",
+                "message": "PoCiSys BCHN&SP connected" if adapter == "pocisys_bchn_sp" else "PoCiSys Public Pool Port connected" if adapter == "pocisys_pool_port" else "Public Pool API connected",
                 "adapter": adapter,
+                "coin": str(pool_data.get("coin") or (port_status or {}).get("coin") or "BTC").upper(),
+                "reported_network_difficulty": pool_data.get("networkDifficulty") or (port_status or {}).get("networkDifficulty"),
                 "share_feed_available": share_feed_available,
                 "share_feed_message": "Actual accepted submissions" if share_feed_available else "This pool version does not expose accepted-share submissions",
                 "total_hashrate_ths": float(pool_data.get("totalHashRate") or 0) / 1e12,
@@ -460,7 +475,7 @@ class PoolLogService:
                 "total_miners": pool_data.get("totalMiners"),
                 "blocks_found": len(blocks),
                 "best_difficulty": self.session_best.get(key) if self.reset_after.get(key) else client.get("bestDifficulty") if isinstance(client, dict) else worker_best or None,
-                "workers_count": len(normalized_workers) if adapter == "pocisys_pool_port" else client.get("workersCount") if isinstance(client, dict) else None,
+                "workers_count": len(normalized_workers) if pocisys_adapter else client.get("workersCount") if isinstance(client, dict) else None,
                 "workers": normalized_workers,
                 "address_detected": bool(address),
                 "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

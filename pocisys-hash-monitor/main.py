@@ -36,7 +36,7 @@ from services.luxos_control import LuxOSControlError, LuxOSControlService
 from services.validation import ApiError, as_float, as_int, clean_host, clean_miner, clean_pool
 
 
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.1.0"
 ROOT = Path(__file__).resolve().parent
 WEB_ROOT = ROOT / "web"
 CONFIG_PATH = Path(os.environ.get("POCISYS_CONFIG_PATH", ROOT / "config.json")).resolve()
@@ -288,7 +288,7 @@ async def discover_public_pool(host=None):
             hosts.append(parsed.hostname)
     attempts = []
     for candidate_host in hosts[:20]:
-        for port in (2020, 2019, 40557):
+        for port in (2020, 2022, 2019, 40557):
             candidate = f"http://{candidate_host}:{port}"
             attempts.append(candidate)
             try:
@@ -302,6 +302,8 @@ async def discover_public_pool(host=None):
                     "host": candidate_host,
                     "total_miners": response.get("totalMiners"),
                     "block_height": response.get("blockHeight"),
+                    "coin": response.get("coin") or "BTC",
+                    "adapter": response.get("_adapter"),
                 }
             except (asyncio.TimeoutError, OSError, ValueError):
                 continue

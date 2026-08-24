@@ -16,9 +16,10 @@ Non-LuxOS miners always remain read-only.
 
 ## Optional setup
 
-- Add a stock Public Pool API or PoCiSys Public Pool Port URL for pool worker
-  data. PoCiSys Public Pool Port uses `http://<umbrel-ip>:2020` and supplies
-  exact accepted-share difficulty.
+- Add a stock Public Pool API, PoCiSys Public Pool Port, or PoCiSys BCHN&SP URL
+  for pool worker data. Public Pool Port uses `http://<umbrel-ip>:2020` and
+  BCHN&SP uses `http://<umbrel-ip>:2022`; both supply exact accepted-share
+  difficulty and identify the correct mining network automatically.
 - Add a Discord webhook for outage, recovery, temperature, hashrate, pool,
   share-quality, best-difficulty, and block alerts.
 - Enable the authenticated read-only MCP connection if Hermes should answer
@@ -55,11 +56,11 @@ for hardware damage, overheating, downtime, lost mining revenue, increased power
 costs, data loss, or other direct or indirect damages. Users are responsible for
 verifying power, cooling, firmware, and manufacturer limits.
 
-## Latest release — v2.0.0
+## Latest release — v2.1.0
 
-Adds per-miner telemetry freshness and a bounded App Self-Health panel with
-current process memory, poll timing, queue utilization, accepted-share counts,
-and configuration size. No CPU, RAM, polling, or queue history is retained.
+Adds native PoCiSys BCHN&SP monitoring on port 2022 with BCH-aware difficulty,
+exact accepted shares, connected workers, pool hashrate, node height, and
+automatic API identification.
 
 Source and support: [PoCiSys Hash Monitor on GitHub](https://github.com/12gaugekenshin/PoCi-Hash-Monitor)
 

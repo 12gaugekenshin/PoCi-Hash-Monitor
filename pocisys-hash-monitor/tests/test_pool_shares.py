@@ -53,6 +53,38 @@ class PoCiSysPortApi(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
+class PoCiSysBchnApi(BaseHTTPRequestHandler):
+    def log_message(self, *_):
+        pass
+
+    def do_GET(self):
+        if self.path == "/api/status":
+            payload = {
+                "apiType": "pocisys-bchn-sp",
+                "coin": "BCH",
+                "connection": {"pool": True, "stratum": True, "node": True},
+                "totalHashRate": 55_000_000_000_000,
+                "totalMiners": 1,
+                "blockHeight": 900_002,
+                "networkDifficulty": 2000,
+                "workers": [{"clientName": "loki.bch", "hashRate": 55_000_000_000_000, "bestDifficulty": 500}],
+                "acceptedShares": [{"id": "bch-one", "received_at": 1000, "worker": "loki.bch", "difficulty": 100}],
+                "candidates": [],
+                "shareFeed": {"available": True, "bounded": True, "max": 50},
+            }
+        elif self.path == "/api/shares":
+            payload = [{"id": "bch-one", "received_at": 1000, "worker": "loki.bch", "difficulty": 100}]
+        else:
+            self.send_error(404)
+            return
+        body = json.dumps(payload).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
 class PoolShareTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -177,6 +209,27 @@ class PoolShareTests(unittest.TestCase):
             self.assertEqual(status["accepted_shares"][0]["network_percent"], 8)
             self.assertEqual(status["session_best_worker"], "loki")
             self.assertEqual(status["all_time_best_worker"], "loki")
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_bchn_sp_adapter_uses_bch_network_and_exact_shares(self):
+        server = ThreadingHTTPServer(("127.0.0.1", 0), PoCiSysBchnApi)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        try:
+            pool = dict(self.pools[0], api_url=f"http://127.0.0.1:{server.server_port}")
+            service = PoolLogService(
+                [pool], Alerts(), history_path=self.path,
+                network_provider=lambda: {"btc": {"difficulty": 1000}, "bch": {"difficulty": 2000}},
+            )
+            asyncio.run(service._poll_public_pool(pool))
+            status = service.status()[0]
+            self.assertEqual(status["adapter"], "pocisys_bchn_sp")
+            self.assertEqual(status["coin"], "BCH")
+            self.assertEqual(status["network_difficulty"], 2000)
+            self.assertEqual(status["accepted_shares"][0]["worker"], "loki.bch")
+            self.assertEqual(status["accepted_shares"][0]["network_percent"], 5)
+            self.assertEqual(status["workers_count"], 1)
         finally:
             server.shutdown()
             server.server_close()
