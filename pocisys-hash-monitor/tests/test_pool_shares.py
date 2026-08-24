@@ -230,6 +230,8 @@ class PoolShareTests(unittest.TestCase):
             self.assertEqual(status["accepted_shares"][0]["worker"], "loki.bch")
             self.assertEqual(status["accepted_shares"][0]["network_percent"], 5)
             self.assertEqual(status["workers_count"], 1)
+            self.assertTrue(status["node_online"])
+            self.assertTrue(status["stratum_online"])
         finally:
             server.shutdown()
             server.server_close()

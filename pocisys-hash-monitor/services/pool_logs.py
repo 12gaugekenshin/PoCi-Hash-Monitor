@@ -462,12 +462,18 @@ class PoolLogService:
                 if self.all_time_best[key] != prior_all_time or self.all_time_best_worker.get(key) != prior_all_time_worker:
                     self._save_share_history()
 
+            connection = port_status.get("connection", {}) if isinstance(port_status, dict) else {}
+            node_status = port_status.get("node", {}) if isinstance(port_status, dict) else {}
+
             self.latest[key] = {
                 "available": True,
                 "message": "PoCiSys BCHN&SP connected" if adapter == "pocisys_bchn_sp" else "PoCiSys Public Pool Port connected" if adapter == "pocisys_pool_port" else "Public Pool API connected",
                 "adapter": adapter,
                 "coin": str(pool_data.get("coin") or (port_status or {}).get("coin") or "BTC").upper(),
                 "reported_network_difficulty": pool_data.get("networkDifficulty") or (port_status or {}).get("networkDifficulty"),
+                "node_online": connection.get("node") if adapter == "pocisys_bchn_sp" else None,
+                "stratum_online": connection.get("stratum") if adapter == "pocisys_bchn_sp" else None,
+                "node_sync_percent": round(float(node_status.get("progress") or 0) * 100, 2) if adapter == "pocisys_bchn_sp" else None,
                 "share_feed_available": share_feed_available,
                 "share_feed_message": "Actual accepted submissions" if share_feed_available else "This pool version does not expose accepted-share submissions",
                 "total_hashrate_ths": float(pool_data.get("totalHashRate") or 0) / 1e12,
